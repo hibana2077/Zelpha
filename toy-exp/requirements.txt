@@ -1,7 +1,1 @@
-numpy>=1.23
-scipy>=1.10
-scikit-learn>=1.2
-torch>=2.0
-torch-geometric>=2.4
-torch_geometric
-matplotlib>=3.6
+# Legacy file retained for compatibility. See the repository root ``requirements.txt`` for the canonical dependency list.

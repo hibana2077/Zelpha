@@ -2,8 +2,8 @@
 
 # 題目（含縮寫）
 
-**Zelpha：Path-aware Hilbertian Affinity for Graph Construction**
-（Zelpha：具路徑感知的希爾伯特親和力，用於高表達力的圖建構）
+**Zelpha：Path-Aware Hilbertian Affinity for Feature-Space Graph Construction**
+（Zelpha：結合流形路徑感知的 Hilbert 空間親和力，用於特徵空間圖構建）
 
 ---
 
