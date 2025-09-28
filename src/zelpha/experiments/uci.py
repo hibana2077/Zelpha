@@ -12,7 +12,7 @@ from scipy.stats import ttest_rel
 from sklearn.datasets import load_breast_cancer, load_digits, load_wine
 from sklearn.preprocessing import StandardScaler
 
-from ..graphs import build_cosine_knn_graph, zelpha_graph
+from ..graphs import build_cosine_knn_graph, build_rbf_knn_graph, build_snn_graph, zelpha_graph
 from ..training import TrainConfig, train_and_eval, train_and_eval_logreg, train_and_eval_svm
 
 
@@ -98,6 +98,10 @@ def run_uci(cfg: UCIRunConfig, use_cuda: bool | None = None) -> Dict:
         baseline_svm: List[Dict[str, float]] = []
         cosine_acc_per_seed: List[float] = []
         cosine_f1_per_seed: List[float] = []
+        rbf_acc_per_seed: List[float] = []
+        rbf_f1_per_seed: List[float] = []
+        snn_acc_per_seed: List[float] = []
+        snn_f1_per_seed: List[float] = []
         sweep_records: Dict[Tuple[float, float], Dict[str, List[float]]] = {
             (a, t): {"acc": [], "f1": []} for a in cfg.alphas for t in cfg.times
         }
@@ -124,6 +128,16 @@ def run_uci(cfg: UCIRunConfig, use_cuda: bool | None = None) -> Dict:
             cos_metrics = train_and_eval(X_all, y_all, A_cos, tcfg, seed=seed, device=device)
             cosine_acc_per_seed.append(float(cos_metrics["test_acc"]))
             cosine_f1_per_seed.append(float(cos_metrics["test_macro_f1"]))
+
+            A_rbf = build_rbf_knn_graph(X_all, k=cfg.k)
+            rbf_metrics = train_and_eval(X_all, y_all, A_rbf, tcfg, seed=seed, device=device)
+            rbf_acc_per_seed.append(float(rbf_metrics["test_acc"]))
+            rbf_f1_per_seed.append(float(rbf_metrics["test_macro_f1"]))
+
+            A_snn = build_snn_graph(X_all, k=cfg.k, sim="jaccard")
+            snn_metrics = train_and_eval(X_all, y_all, A_snn, tcfg, seed=seed, device=device)
+            snn_acc_per_seed.append(float(snn_metrics["test_acc"]))
+            snn_f1_per_seed.append(float(snn_metrics["test_macro_f1"]))
 
             for alpha in cfg.alphas:
                 for t in cfg.times:
@@ -163,6 +177,16 @@ def run_uci(cfg: UCIRunConfig, use_cuda: bool | None = None) -> Dict:
                 "test_acc": aggregate_stats(cosine_acc_per_seed),
                 "test_macro_f1": aggregate_stats(cosine_f1_per_seed),
                 "per_seed": {"acc": cosine_acc_per_seed, "f1": cosine_f1_per_seed},
+            },
+            "rbf": {
+                "test_acc": aggregate_stats(rbf_acc_per_seed),
+                "test_macro_f1": aggregate_stats(rbf_f1_per_seed),
+                "per_seed": {"acc": rbf_acc_per_seed, "f1": rbf_f1_per_seed},
+            },
+            "snn_jaccard": {
+                "test_acc": aggregate_stats(snn_acc_per_seed),
+                "test_macro_f1": aggregate_stats(snn_f1_per_seed),
+                "per_seed": {"acc": snn_acc_per_seed, "f1": snn_f1_per_seed},
             },
             "zelpha": {},
         }

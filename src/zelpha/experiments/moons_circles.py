@@ -42,7 +42,7 @@ class ExperimentConfig:
 
 def run_experiment(cfg: ExperimentConfig, outdir: str = "results", use_cuda: bool | None = None) -> Dict:
     device = torch.device("cuda" if (use_cuda if use_cuda is not None else torch.cuda.is_available()) else "cpu")
-    results: Dict[str, Dict[float, Dict[str, float]]] = {"cosine": {}, "zelpha": {}, "logreg": {}, "svm": {}}
+    results: Dict[str, Dict[float, Dict[str, float]]] = {"logreg": {}, "svm": {}}
 
     for noise in cfg.noise_levels:
         X, y = make_dataset(cfg.dataset, cfg.n_samples, noise=noise, seed=cfg.train.random_state)
@@ -57,6 +57,8 @@ def run_experiment(cfg: ExperimentConfig, outdir: str = "results", use_cuda: boo
 
         graphs = build_graphs_for_point_cloud(X, cfg.graph)
         for name, A in graphs.items():
+            if name not in results:
+                results[name] = {}
             metrics = train_and_eval(X, y, A, cfg.train, seed=cfg.train.random_state, device=device)
             results[name][noise] = metrics
             print(f"[{cfg.dataset} | noise={noise:.2f} | {name}] test_acc={metrics['test_acc']:.4f} test_macro_f1={metrics['test_macro_f1']:.4f}")
@@ -74,7 +76,7 @@ def run_experiment(cfg: ExperimentConfig, outdir: str = "results", use_cuda: boo
             "dropout": cfg.train.dropout,
             "epochs": cfg.train.epochs,
             "patience": cfg.train.patience,
-            "graph": "cosine-kNN vs Zelpha",
+            "graph": "cosine, rbf, snn_jaccard kNN vs Zelpha",
             "baseline": "Logistic Regression (StandardScaler + LogisticRegression) and SVM (StandardScaler + SVC[RBF]) on raw features",
         },
     }

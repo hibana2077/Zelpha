@@ -17,7 +17,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-from .graphs import build_cosine_knn_graph, zelpha_graph
+from .graphs import (
+    build_cosine_knn_graph,
+    build_rbf_knn_graph,
+    build_snn_graph,
+    zelpha_graph,
+)
 
 
 def seed_everything(seed: int) -> None:
@@ -84,17 +89,19 @@ def csr_to_edge_index(A: csr_matrix, device: torch.device) -> Tuple[torch.Tensor
 
 
 def build_graphs_for_point_cloud(X: np.ndarray, cfg: GraphConfig) -> Dict[str, csr_matrix]:
-    return {
-        "cosine": build_cosine_knn_graph(X, k=cfg.k),
-        "zelpha": zelpha_graph(
-            X,
-            k=cfg.k,
-            alpha=cfg.alpha,
-            t=cfg.t,
-            kernel=cfg.kernel,
-            heat_rank=cfg.heat_rank,
-        ),
-    }
+    graphs: Dict[str, csr_matrix] = {}
+    graphs["cosine"] = build_cosine_knn_graph(X, k=cfg.k)
+    graphs["rbf"] = build_rbf_knn_graph(X, k=cfg.k, gamma=None)
+    graphs["snn_jaccard"] = build_snn_graph(X, k=cfg.k, metric="euclidean", sim="jaccard", include_mutual_only=False)
+    graphs["zelpha"] = zelpha_graph(
+        X,
+        k=cfg.k,
+        alpha=cfg.alpha,
+        t=cfg.t,
+        kernel=cfg.kernel,
+        heat_rank=cfg.heat_rank,
+    )
+    return graphs
 
 
 def train_and_eval(

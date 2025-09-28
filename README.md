@@ -22,6 +22,26 @@ Reusable toy experiments and utilities that showcase the Zelpha graph constructi
 
 All entrypoints live inside `zelpha.experiments`. You can run them straight from the repository root once dependencies are installed.
 
+## Graph builders
+
+Available constructors in `zelpha.graphs`:
+
+- `build_cosine_knn_graph`: cosine similarity k-NN (symmetric)
+- `build_rbf_knn_graph`: RBF/Gaussian k-NN affinity; auto-estimates gamma if not provided
+- `build_snn_graph`: Shared Nearest Neighbors with `sim="jaccard"` (default) or `sim="count"`
+- `zelpha_graph`: fusion of RKHS-cosine and graph heat kernel (geometric or convex)
+
+### Python API
+
+```python
+from zelpha.graphs import build_cosine_knn_graph, build_rbf_knn_graph, build_snn_graph, zelpha_graph
+
+A_cos = build_cosine_knn_graph(X, k=10)
+A_rbf = build_rbf_knn_graph(X, k=10)  # or pass gamma=...
+A_snn = build_snn_graph(X, k=10, sim="jaccard")  # or sim="count"
+A_zel = zelpha_graph(X, k=10, alpha=0.5, t=1.0, kernel="rbf", heat_rank=128)
+```
+
 ## Quick start
 
 1. **Create an environment and install dependencies**

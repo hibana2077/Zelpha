@@ -27,6 +27,20 @@ def rbf_kernel(X: np.ndarray, gamma: float) -> np.ndarray:
     return np.exp(-gamma * sq_dists)
 
 
+def _estimate_rbf_gamma(X: np.ndarray, n_neighbors: int = 50) -> float:
+    """Heuristic to estimate RBF gamma from median neighbor distance.
+
+    Uses median of Euclidean distances to the 1..k-th neighbors (excluding self)
+    and sets gamma = 1 / (median^2 + eps).
+    """
+    n = X.shape[0]
+    k = min(n_neighbors, n)
+    nbrs = NearestNeighbors(n_neighbors=k, metric="euclidean").fit(X)
+    dists, _ = nbrs.kneighbors(X)
+    med = np.median(dists[:, 1:])
+    return float(1.0 / (med ** 2 + 1e-12))
+
+
 def topk_sparsify(W: np.ndarray, k: int, symmetrize: bool = True) -> csr_matrix:
     """Keep the top-``k`` neighbors per row of ``W`` and return a sparse matrix."""
     n = W.shape[0]
@@ -80,6 +94,121 @@ def build_cosine_knn_graph(X: np.ndarray, k: int) -> csr_matrix:
         data.extend(sims.tolist())
     A = csr_matrix((data, (rows, cols)), shape=(n, n))
     return A.maximum(A.T)
+
+
+def build_rbf_knn_graph(X: np.ndarray, k: int, gamma: float | None = None) -> csr_matrix:
+    """Construct a symmetric RBF/Gaussian k-NN affinity graph.
+
+    Parameters
+    ----------
+    X : array-like of shape (n, d)
+        Input features.
+    k : int
+        Number of neighbors to keep per node.
+    gamma : float, optional
+        RBF bandwidth; if None, estimated from median neighbor distance.
+
+    Returns
+    -------
+    csr_matrix
+        Symmetric kNN affinity matrix with weights in [0, 1].
+    """
+    if gamma is None:
+        gamma = _estimate_rbf_gamma(X)
+    K = rbf_kernel(X, gamma=gamma)
+    # Normalize to cosine-style affinity (optional but common)
+    diag = np.sqrt(np.clip(np.diag(K), 1e-12, None))
+    H = (K / diag[:, None]) / diag[None, :]
+    A = topk_sparsify(H, k=k, symmetrize=True)
+    # Clip any numerical spill
+    A.data = np.clip(A.data, 0.0, 1.0)
+    return A
+
+
+def build_snn_graph(
+    X: np.ndarray,
+    k: int,
+    *,
+    metric: str = "euclidean",
+    sim: str = "jaccard",
+    include_mutual_only: bool = False,
+) -> csr_matrix:
+    """Construct a Shared Nearest Neighbor (SNN) similarity graph.
+
+    For each node i, compute its k-NN set N_k(i) under the chosen metric.
+    The edge weight between i and j (where j in N_k(i) or i in N_k(j)) is:
+      - sim="jaccard": |N_k(i) ∩ N_k(j)| / |N_k(i) ∪ N_k(j)| (in [0,1])
+      - sim="count" (aka SNN count): |N_k(i) ∩ N_k(j)| (integer in [0,k])
+
+    Parameters
+    ----------
+    X : array-like of shape (n, d)
+        Input features.
+    k : int
+        Number of nearest neighbors to define the neighbor sets N_k(i).
+    metric : str, default="euclidean"
+        Distance metric for kNN search.
+    sim : {"jaccard", "count"}, default="jaccard"
+        Similarity function.
+    include_mutual_only : bool, default=False
+        If True, only keep edges where i in N_k(j) and j in N_k(i) (mutual kNN).
+
+    Returns
+    -------
+    csr_matrix
+        Symmetric SNN similarity matrix. For sim="count", values are ints; for
+        sim="jaccard", values are floats in [0,1].
+    """
+    n = X.shape[0]
+    # Compute kNN sets
+    nbrs = NearestNeighbors(n_neighbors=min(k + 1, n), metric=metric)
+    nbrs.fit(X)
+    _, indices = nbrs.kneighbors(X, return_distance=True)
+
+    # Build neighbor sets excluding self
+    neigh_sets: List[set[int]] = []
+    for i in range(n):
+        row = indices[i]
+        row = row[row != i]
+        if len(row) > k:
+            row = row[:k]
+        neigh_sets.append(set(int(x) for x in row))
+
+    rows: List[int] = []
+    cols: List[int] = []
+    data: List[float] = []
+
+    for i in range(n):
+        Ni = neigh_sets[i]
+        if not Ni:
+            continue
+        # Candidate neighbors: either Ni or mutual ones based on flag
+        candidates = list(Ni)
+        for j in candidates:
+            if include_mutual_only and i not in neigh_sets[j]:
+                continue
+            Nj = neigh_sets[j]
+            inter = len(Ni & Nj)
+            if inter == 0:
+                continue
+            if sim == "jaccard":
+                uni = len(Ni | Nj)
+                w = inter / max(uni, 1)
+            elif sim == "count":
+                w = float(inter)
+            else:
+                raise ValueError("sim must be one of {'jaccard','count'}")
+            rows.append(i)
+            cols.append(j)
+            data.append(float(w))
+
+    A = csr_matrix((data, (rows, cols)), shape=(n, n))
+    # Symmetrize by max to keep strongest agreement
+    A = A.maximum(A.T)
+    if sim == "jaccard":
+        # numerical stability
+        A.data = np.clip(A.data, 0.0, 1.0)
+    return A
 
 
 def normalized_laplacian(A: csr_matrix) -> csr_matrix:
@@ -153,10 +282,7 @@ def zelpha_graph(
     n = X.shape[0]
     if kernel == "rbf":
         if gamma is None:
-            nbrs = NearestNeighbors(n_neighbors=min(50, n), metric="euclidean").fit(X)
-            dists, _ = nbrs.kneighbors(X)
-            med = np.median(dists[:, 1:])
-            gamma = 1.0 / (med ** 2 + 1e-12)
+            gamma = _estimate_rbf_gamma(X)
         K = rbf_kernel(X, gamma=gamma)
     elif kernel == "linear":
         K_lin = X @ X.T
@@ -257,6 +383,8 @@ def geodesic_distortion(
 __all__ = [
     "set_seed",
     "rbf_kernel",
+    "build_rbf_knn_graph",
+    "build_snn_graph",
     "topk_sparsify",
     "build_cosine_knn_graph",
     "normalized_laplacian",

@@ -1,3 +1,10 @@
+新增兩個圖邊權重的baseline供比較：
+
+- RBF/Gaussian 親和力：`build_rbf_knn_graph(X, k, gamma=None)`，若未提供 gamma，使用鄰居距離的 median heuristic 自動估計。
+- 共享近鄰 (SNN) 相似度：`build_snn_graph(X, k, sim="jaccard")`，可選 `sim="count"`；可透過 `include_mutual_only=True` 僅保留 mutual kNN。
+
+這兩個介面已整合到 `training.build_graphs_for_point_cloud`，在 moons/circles 實驗中會自動加到報表中（鍵名：`rbf`、`snn_jaccard`）。
+
 以下是一個「簡單但有深度」且縮寫為 **Zelpha** 的研究題目與完整大綱，貼合你給的方向（Graph construction／representation learning／representation graph theory）與想法（提出一種比 cosine 更表達力強的 edge 權重，圖建好後餵 GNN/GCN）：
 
 # 題目（含縮寫）
