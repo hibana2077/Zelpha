@@ -1,335 +1,285 @@
-**一、論文題目（含 Zelpha 縮寫）**
+# ZELPHA：Zoom-Equivariant Lipschitz Prototype Hypothesis for Aerial Land-Use Classification
 
-> **Zelpha: Zonal Earth-observation Latent Potential via Hierarchical Aggregation for Ordinal Agricultural Suitability**
+> （ZELPHA：具縮放等變與 Lipschitz 正則之原型假說，用於衛星遙測土地利用分類）
 
-Zelpha = **Z**onal **E**arth-observation **L**atent **P**otential via **H**ierarchical **A**ggregation
-（中文可譯作：**「Zelpha：利用分區階層聚合估計潛在農業適宜度的遙測序位模型」**）
+縮寫對應：**Z**oom-**E**quivariant **L**ipschitz **P**rototype **H**ypothesis for **A**erial scenes → ZELPHA
 
 核心 idea：
-把 AgriPotential 的像素級「潛勢等級」當成**潛在連續「農業適宜度場」的粗量化觀測**，
-再加上一個**非常簡單的分區（zone-wise）+ 階層式 regularization**，
-在理論上證明：這種學習方式對「潛在連續適宜度」是**一致且可解釋**的。
+用一個**很小、結構簡單的 CNN + 原型表示 + Lipschitz 約束**，在像 UC Merced Land Use 這種**老但小又乾淨**的遙測資料集上，專門研究「**縮放／zoom 變化下的分類穩定性**」，給出**數學上的 robustness 條件與界**，而不是只做 engineering SOTA。
 
 ---
 
-## 1. 研究核心問題
+## 一、資料集設定
 
-> **如何在多光譜、多時間序列的遙測資料上，
-> 用極簡單的模型與 loss，穩定且可解釋地學出「連續的農業潛在適宜度場」，
-> 同時尊重序位標籤（very low ~ very high）與空間分區結構？**
+**主資料集：UC Merced Land Use**
 
-AgriPotential 提供的是 5 級序位潛勢（very low, low, average, high, very high），
-本質上代表的是一個連續、但被粗糙切成 5 個 bin 的「農業適宜度」。
+* 21 類 land-use（agriculture, airplane, beach, residential...），
+* 每類 100 張，總共 2100 張影像，解析度 256×256 RGB、約 0.3 m/pixel。([weegee.vision.ucmerced.edu][1])
+  → 小、完整、經典，而且是標準的場景 classification 資料集，很適合做「理論導向」的實驗。
 
-你這篇 Zelpha 要問的就是：
+**可選擴充：EuroSAT-RGB（附錄或第二組實驗）**
 
-* 我們能不能
+* 基於 Sentinel-2 的土地利用／覆蓋分類，10 類、約 27,000 張影像，13 波段（可只用 RGB 版）。([GitHub][2])
 
-  * 用一個很簡單的 **UNet + scalar head** 模型
-  * 加上一點點**階層式（pixel ↔ zone）regularization** 和**序位 loss**
-  * 在**理論上證明**：這其實是在學一個「連續潛在適宜度函數」？
-* 並且在實驗上證明：這樣學出來的「潛在場」
-  比單純做 pixel-wise classification / ordinal regression 更穩定、更有解釋力。
+**新任務設定（ZELPHA 任務）**
+在 UC Merced 上定義新 protocol：
 
----
+1. **Train scale**：訓練時只看「一個固定 scale」的影像（例如固定 256×256，限制 zoom augmentation 的範圍）。
+2. **Test scale shift**：測試時對每張圖做一系列 zoom-in / zoom-out（例如 0.7×, 0.85×, 1.15×, 1.3×），再 resize 回 256×256。
+3. 任務：**在 scale 變化下保持分類結果穩定、性能下降可被理論界估計。**
 
-## 2. 研究目標
-
-1. **建模目標**
-
-   * 提出一個簡單的模型 Zelpha，把 pixel-wise 序位標籤
-     解釋為潛在連續變數的區間標註（interval-labelled data）。
-   * 透過 zone（分區）階層結構，學出空間上平滑、對序位一致的「潛在農業適宜度場」。
-
-2. **理論目標**
-
-   * 定義一個簡單的 **Zelpha loss**（ordinal loss + zone regularizer）。
-   * 證明在 mild 假設下，Zelpha loss 的風險最小化解，
-     在 pixel 與 zone 層級上對真實「潛在適宜度」是 **Fisher-consistent / Bayes-consistent**
-     （或至少對 MAE-type 風險是一致的）。
-
-3. **實驗目標**
-
-   * 在 AgriPotential 上，比較：
-
-     * 單純 cross-entropy
-     * 既有 ordinal loss（比如 cumulative link / CORAL / EMD）
-     * 加上 Zelpha zone regularizer 的版本
-   * 檢驗：
-
-     * MAE、±1 accuracy、區域尺度的一致性
-     * 模型對 class imbalance 與缺標區域的穩健性。
+這樣你等於是**在舊資料集上定義一個「縮放穩健性」的新任務**。
 
 ---
 
-## 3. 預期貢獻（Contribution）
+## 二、研究核心問題（Research Core Question）
 
-1. **理論貢獻**
-
-   * 提出一個**非常輕量**的階層式序位學習框架 Zelpha，
-     並給出其對「潛在連續適宜度」的一致性分析與誤差上界。
-2. **方法貢獻**
-
-   * 一個**可直接 plug-in 到任意 encoder（UNet / Swin-UNet / CNN）** 的
-     zone-aware ordinal loss（只多出一個簡單的 regularization 項）。
-3. **應用貢獻**
-
-   * 在 AgriPotential 上證明：
-     這種簡單的階層式序位學習，
-     相較於單純 pixel-wise ord. regression，
-     能更好地捕捉區域尺度的農業潛勢，且對 class imbalance 更穩定。
-4. **實務貢獻**
-
-   * 提供區域尺度（zone-level）的潛勢評估與不確定度估計，
-     對土地規劃／作物推薦更符合實際決策單位的尺度。
+1. **能不能設計一個結構簡單、可分析的 CNN 模型，在遙測影像的縮放變化下仍具有理論上可證明的分類穩定性？**
+2. **在小型遙測資料集（UC Merced）上，scale-equivariant + Lipschitz 約束 + prototype-based decision，是否能在「縮放分布移轉」下給出明確的 robustness 條件與實驗驗證？**
 
 ---
 
-## 4. 創新點（Novelty）
+## 三、研究目標（Objectives）
 
-1. **「序位 + 區域階層」的極簡框架**
+1. 提出 **ZELPHA 模型**：一個
 
-   * 多數遙測 work 要嘛只做 pixel-wise classification，要嘛做 segmentation，
-     很少把「序位標籤」和「區域（zone）結構」**同時**放進同一個損失與理論框架。
-2. **將序位標籤視為「區間標註」的潛在變數模型**
+   * 具 **縮放等變（Zoom-Equivariant）** 的卷積特徵抽取器，
+   * 加上 **Lipschitz 約束**，
+   * 以 **原型（prototype）為核心的分類頭**。
+2. 對於 ZELPHA，建立一個**數學上可證明的條件**：在何種 Lipschitz 常數與原型間距下，對一定範圍的縮放變化仍保持正確分類。
+3. 在 UC Merced（以及選配的 EuroSAT）上驗證：
 
-   * 把等級 (1,2,\dots,K) 解釋成 ((\tau_{k-1}, \tau_k]) 的區間，
-     並在 loss 中直接懲罰潛在值落在區間外的程度。
-3. **對 zone-average 的顯式 regularization**
-
-   * 把 pixel level 的 prediction 平均成 zone-level
-     並對 zone-level 使用額外的 ordinal loss / smoothness，
-     理論上可視為在 function space 上加入一個簡單的 quadratic penalty。
+   * ZELPHA 在 scale shift 下的準確率與穩定性優於 baseline CNN / scale-equivariant CNN / 單純 Lipschitz CNN。
+4. 定義並公開一個**Scale-Robust UC Merced Benchmark Protocol**（含程式與設定），讓後人可直接沿用。
 
 ---
 
-## 5. 理論洞見與數學架構（概要）
+## 四、方法論概觀（Methodology）
 
-### 5.1 問題形式化
+### 1. 模型結構（ZELPHA 模型）
 
-* (x_{i} \in \mathbb{R}^{T \times B})：第 (i) 個 pixel 的多時間、多頻段特徵
-  （例如 11 個時間點 × 10 頻段，展平或用 3D conv 皆可）。
-* (y_{i,c} \in {1,\dots,K})：對 crop type (c \in {1,2,3}) 的潛勢等級（K=5）。
-* 假設存在潛在連續變數：
-  [
-  Z_{i,c} = f^*(x_i, c) \in \mathbb{R}
-  ]
-* 序位標籤由閾值產生：
-  [
-  y_{i,c} = k \quad \Longleftrightarrow \quad \tau_{k-1} < Z_{i,c} \le \tau_k
-  ]
-  其中 (\tau_0 < \tau_1 < \dots < \tau_K) 為未知閾值。
+**(a) Feature extractor：縮放等變 CNN**
 
-### 5.2 模型
+* 採用 **scale-equivariant convolution / steerable filters** 的 idea，把尺度當作 group element 處理；像是 scale-equivariant CNN 或 Scale-Equivariant U-Net 這類方法中的 core 觀念。([arXiv][3])
+* 實作上可以簡化為：
 
-* 用一個 encoder（例如 UNet）+ head 近似 (f^*(x_i, c))：
-  [
-  f_\theta(x_i, c) = z_{i,c} \in \mathbb{R}
-  ]
-* 閾值 ({\tau_k}) 可以：
+  * 對若干個 $scale ( s \in S = {s_1,\dots,s_k} )$ 做共享權重的卷積（group conv），
+  * 然後做 **scale pooling**（取平均或最大），得到近似的 scale-invariant feature。
 
-  * 當成可學習參數（類似 ordinal regression 中的 cut-points），或
-  * 固定成等距（簡化）。
+**(b) Lipschitz 約束**
 
-### 5.3 Zelpha ordinal loss（像素層級）
+* 使用 spectral normalization / weight normalization 限制每層線性轉換的 operator norm，使整個網路的 Lipschitz 常數 $L$ 有明確上界。([Broad Institute][4])
+* 可加上 Lipschitz regularization term：
+  $$
+  \mathcal{L}*{\text{Lip}} = \lambda \sum_l \max(0, |W_l|*{\text{op}} - 1)^2
+  $$
+  讓整個網路近似 1-Lipschitz 或某固定 (L)。
 
-對單一 pixel，給定 label (y)，定義「區間違反」的損失：
+**(c) Prototype-based classifier**
 
-[
-\ell_{\text{ord}}(z, y)
-= \big( \tau_{y-1} - z \big)*+^2 + \big( z - \tau*{y} \big)_+^2
-]
+* 為每個類別 $c$ 存一個 prototype $\mu_c \in \mathbb{R}^d$。
+* 給定輸入 $x$，feature extractor 得到 $z = f_\theta(x)$。
+* 分類用 **距離到 prototype**：
+  $$
+  p(y=c\mid x) \propto \exp(-|z - \mu_c|^2)
+  $$
+* 加上 **原型分離 loss**，鼓勵不同類別的 prototype 彼此距離大、同類樣本靠近：
+  $$
+  \mathcal{L}*{\text{proto}} = \sum_i |f*\theta(x_i) - \mu_{y_i}|^2 * \alpha \sum_{c\neq c'} \max(0, m - |\mu_c - \mu_{c'}|)^2
+$$
 
-* 如果 (z) 落在正確區間 ((\tau_{y-1}, \tau_y])，損失為 0。
-* 若偏離該區間，懲罰距離的平方。
-
-**理論洞見 1（Fisher consistency 概念）**
-
-在假設：
-
-* (Z|X=x) 的條件分佈連續且有界
-* 標籤產生真實遵守上述區間 model
-
-可以證明：當樣本數趨近無窮，最小化期望風險
-[
-R(f) = \mathbb{E}\left[ \ell_{\text{ord}}(f(X,c), Y) \right]
-]
-的函數 (f^\dagger)，會把預測值 (f^\dagger(x,c)) 推向
-對應區間中最「風險最小」的點，
-而這個點與條件中位數/條件平均（看你設計）存在單調對應。
-
-換句話說，你可以 show Zelpha ordinal loss 對一類「潛在連續適宜度」風險是**一致的 surrogate**。
-（論文中可以 formalize 為定理＋證明）
-
-### 5.4 Zone-level 階層 regularization
-
-設每個 pixel (i) 屬於一個 zone (g(i) \in {1,\dots,G})：
-
-[
-\bar{z}*{g,c} = \frac{1}{|S_g|}\sum*{i \in S_g} f_\theta(x_i, c)
-]
-
-定義 zone-level loss（可用相同 ordinal loss 或 smoothness）：
-
-[
-L_{\text{zone}} = \sum_{g,c} w_g , \ell_{\text{ord}}(\bar{z}*{g,c}, \tilde{y}*{g,c})
-]
-
-* (\tilde{y}_{g,c})：zone 的潛勢標籤，可由 pixel majority 或官方區域標註（如果有）。
-* 同時加入 pixel 與 zone 的 regularization：
-
-[
-L_{\text{Zelpha}}(\theta) =
-\sum_{i,c} \ell_{\text{ord}}(f_\theta(x_i,c), y_{i,c})
-;+; \lambda \sum_{g,c} w_g , \ell_{\text{ord}}(\bar{z}*{g,c}, \tilde{y}*{g,c})
-;+; \mu \sum_{(i,j)\in \mathcal{N}} (f_\theta(x_i,c) - f_\theta(x_j,c))^2
-]
-
-(\mathcal{N}) 為鄰域 pixel（Laplacian 平滑）。
-
-**理論洞見 2（等價於帶 Tikhonov regularization 的學習）**
-
-在固定 encoder 表示、只在線性 head / function space 上優化的簡化情況下，可證明：
-
-* Zelpha 的最小化問題等價於
-  在 Hilbert space 上最小化
-  「期望 ordinal 損失 + 一個 quadratic norm」，
-  並導出一般化誤差上界（依賴 (\lambda,\mu)、Rademacher complexity、樣本量）。
-
-這一段可以是比較數學味的 main theorem + sketch proof。
+**總 loss：**
+$$
+\mathcal{L} = \mathcal{L}*{\text{CE}} + \beta \mathcal{L}*{\text{proto}} + \gamma \mathcal{L}_{\text{Lip}}
+$$
 
 ---
 
-## 6. 方法論（實作面很簡單）
+### 2. 縮放等變與 robustness 設計
 
-1. **Backbone**
+* 定義縮放操作 $T_s(x)$：對影像做縮放 factor $s$ 並重新 crop/resize 回 256×256。
+* 訓練時：
 
-   * 直接沿用 AgriPotential paper 的 2D UNet baseline，
-     把 11 時間 × 10 頻段 stack 成 110 channels 輸入。
-   * Head 改成：每 crop type 一個 scalar head，輸出 (z_{i,c})。
+  * 一部分 batch 使用單一 scale，
+  * 一部分 batch 對每張圖抽一組 $s \in S$ 做隨機縮放，以強化等變性與 invariance。
+* ZELPHA 的設計目標：
 
-2. **Loss 組合**
-
-   * Pixel-wise Zelpha ordinal loss（上面的 (\ell_{\text{ord}})）。
-   * Zone-level ordinal loss + 鄰域 smoothness penalty。
-   * Multi-task over 3 crop types，共享 encoder，head 分開。
-
-3. **訓練細節**
-
-   * 與原論文相同的 train/val/test split（80/10/10），
-     保持實驗可比性。
-   * Adam / AdamW，學習率 schedule，train 幾十 epoch 即可。
+  * 讓 $f_\theta$ 在縮放下接近等變：
+    $$
+    f_\theta(T_s x) \approx \rho_s(f_\theta(x))
+    $$
+  * 再透過 scale pooling 取得近似 invariant representation。
 
 ---
 
-## 7. 預計使用的 Dataset
+## 五、數學理論推演與證明（方向）
 
-**主要：AgriPotential**
+這邊給你可以寫進「理論部分」的主幹，詳細 proof 可以自己鋪：
 
-* **影像來源**：Sentinel-2 多光譜、多時間序列
-* **時間維度**：2019 年約 11 個月份時間點
-* **頻段**：10 個 spectral bands（B2–B4, B5–B8A, B11, B12）
-* **空間解析度**：5 m / pixel（super-resolved）
-* **patch**：128×128 pixels，total 8890 patches（train 7095, val 914, test 881）
-* **標籤**：
+### 1. 問題建模
 
-  * 3 種作物：viticulture、market gardening、field crops
-  * 5 級序位農業潛勢：very low, low, average, high, very high
-  * pixel-level annotation，部分像素無標籤（ignore）。
+* 影像空間 $\mathcal{X}$，類別集合 $\mathcal{Y} = {1,\dots,C}$。
+* 縮放群 $\mathcal{S} = [s_{\min}, s_{\max}]$，$T_s: \mathcal{X} \to \mathcal{X}$ 為對應的影像縮放操作。
+* Feature extractor $f_\theta: \mathcal{X}\to\mathbb{R}^d$ 是 (L)-Lipschitz：
+  $$
+  |f_\theta(x) - f_\theta(x')| \le L\cdot d_{\mathcal{X}}(x,x')
+  $$
+* 原型集合 ${\mu_c}*{c=1}^C$，分類 rule：
+  $$
+  \hat{y}(x) = \arg\min_c |f*\theta(x) - \mu_c|
+  $$
 
-**可選延伸（optional）**
+### 2. Robust margin 定義
 
-* 若時間與篇幅允許，可在 BigEarthNet / EuroSAT 上
-  人工構造簡單的「序位標籤」（例如 NDVI-based quantile），
-  驗證 Zelpha 框架的可遷移性。
+對樣本 $(x,y)$，定義 margin：
+$$
+m(x) = \min_{c\ne y} \left(|f_\theta(x) - \mu_c| - |f_\theta(x) - \mu_y|\right)
+$$
+
+若 $m(x) > 0$ 則分類正確。
+
+### 3. 命題：縮放擾動下的 margin 下界
+
+**命題 1（Scale-Robust Margin）**
+假設 $f_\theta$ 是 $L$-Lipschitz，且對每個縮放 $s$ 有
+$$
+d_{\mathcal{X}}(x, T_s x) \le \delta_s
+$$
+則對所有 $s$：
+$$
+|m(T_s x) - m(x)| \le 2L \delta_s
+$$
+
+**證明 sketch：**
+
+* 對任意類別 $c$，
+  $$
+  \big||f_\theta(T_s x) - \mu_c| - |f_\theta(x) - \mu_c|\big|
+  \le |f_\theta(T_s x) - f_\theta(x)|
+  \le L\delta_s
+  $$
+* margin 是兩個「距離到 prototype」的差（y vs. 其他 c），
+  → 兩項各變動最多 $L\delta_s$，
+  → 差的變動最多 $2L\delta_s$。
+
+**推論（Corollary）**
+若存在 $\bar{s}$ 使得對所有 $|s-1|\le \bar{s}$，皆有 $2L\delta_s < m(x)$，
+則所有這些縮放版本 $T_s x$ 仍維持正確分類。
+
+→ **這給了「在多大 range 的縮放下仍穩定」的明確條件**：
+
+* margin 越大（原型分得越開）、
+* Lipschitz 常數越小、
+* 影像縮放後與原圖距離越小，
+  則模型越穩定。
+
+### 4. 一般化界（可以寫成延伸）
+
+基於 Lipschitz network 的一般化理論（Lipschitz regularity of DNNs、Sorting out Lipschitz function approximation 等）可以得到：([NeurIPS Papers][5])
+
+* 函數類 $\mathcal{F}$ 的 Rademacher complexity 與 Lipschitz 常數成正比。
+* 即在控制 $L$ 下，你可以給出樣本數 $n$ 的 generalization bound：
+  $$
+  \mathcal{R}(f) \le \hat{\mathcal{R}}(f) + O\Big(\frac{L \cdot B}{\sqrt{n}}\Big)
+  $$
+  其中 $B$ 與輸入空間直徑有關。
+
+你可以在論文中給出一個 **「在縮放群下的 robust risk」**：
+$$
+\mathcal{R}*{\text{rob}}(f) = \mathbb{E}*{(x,y)}\Big[\sup_{s\in\mathcal{S}} \ell(f(T_s x),y)\Big]
+$$
+再用上面的 margin + Lipschitz 不等式把它 upper bound 成標準 risk 加上一個與 $L$ 和 $\sup_s \delta_s$ 有關的項。
 
 ---
 
-## 8. 與現有研究之區別
+## 六、預期貢獻與創新點
 
-1. **相對於 AgriPotential 原論文**
+### 貢獻
 
-   * 原論文重點在於：
+1. **ZELPHA 模型**：一個結構簡單、可實作的小型 CNN，結合
 
-     * 資料集構建與描述
-     * 提供 U-Net baseline（classification / regression / ordinal regression），
-       沒有做**明確的潛在變數理論建模**，也沒有分區階層 loss。
-   * Zelpha 則是：
+   * scale-equivariant feature learning、
+   * Lipschitz 約束、
+   * prototype-based decision rule，
+     專門針對遙測場景的縮放穩健性。
+2. **理論結果**：給出
 
-     * 把這個 dataset 當成「序位區間標註的潛在連續適宜度問題」，
-       提出理論框架與 loss。
-     * 加上「zone-aware regularization」與一致性分析。
+   * margin 在縮放擾動下的上下界，
+   * 在 Lipschitz constant 與 prototype 間距條件下的 robustness 條件。
+3. **新 benchmark protocol**：在 UC Merced/EuroSAT 上定義**縮放穩健性測試流程**，並公開 code。
+4. 顯示在**小型實際遙測資料集**上，理論導向的設計（而不是超深網路）也能帶來明顯的 scale shift robustness 改善。
 
-2. **相對於一般 ordinal regression / segmentation 工作**
+### 創新點（相對現有研究）
 
-   * 大多只在 pixel level 使用 ordinal loss，
-     沒有整合空間分區與 zone-level 約束。
-   * Zelpha 把
+1. 相對於既有 UC Merced / EuroSAT 工作多半只做「一般分類」或深度 CNN benchmark，你的工作：
 
-     * 序位性（ordinal）
-     * 空間平滑（local smoothness）
-     * 區域階層結構（zone-level）
-       放在同一個統一的損失與理論裡，
-       但模型仍然**非常簡單**（UNet + scalar head + regularizer）。
+   * 把重點換成「縮放／zoom shift 下的穩健性」，
+   * 並且有明確的數學分析，而不是純 empirical。([arXiv][6])
+2. 與既有 scale-equivariant CNN 研究不同：這些工作多半在自然影像或 3D/segmentation 上展示效果，較少聚焦在小型遙測資料集與 Lipschitz+prototype 的組合。([arXiv][3])
+3. 與 Lipschitz-constrained network 的工作不同：那一線文獻主要關於 adversarial robustness 或 Wasserstein distance estimation，你這邊把它具體套在「縮放群」上的幾何擾動，並給出實際的遙測應用示範。([Broad Institute][4])
 
 ---
 
-## 9. Experiment 設計（概要）
+## 七、與現有研究之區別（更明確講法）
 
-### 9.1 任務設定
+寫在 Related Work 最後可以這樣對比：
 
-* **Task 1：pixel-wise ordinal potential prediction**
+1. **傳統遙測場景分類**：像各種在 UC Merced 與 EuroSAT 上的 CNN / ensemble 方法，多關注提升 accuracy；你關注的是**在未見過的縮放條件下的穩健性 + 理論分析**。([arXiv][6])
+2. **Scale-equivariant networks**：雖然已有對 scale-equivariance 的一般理論與實作，但缺少「Lipschitz + prototype margin 分析」和「遙測縮放 benchmark」的結合。([arXiv][3])
+3. **Lipschitz networks 理論**：現有工作多在 toy setting 或 adversarial norm ball perturbation，較少具體到「實務影像上的幾何變換（縮放）」與遙測場景。([NeurIPS Papers][5])
 
-  * 輸出 5 級等級；評估：
+---
 
-    * MAE（等級差）
-    * Accuracy
-    * Accuracy within ±1 等級
-    * class-wise F1 / macro-F1。
-* **Task 2：zone-level potential prediction**
+## 八、實驗設計（Experiment Design）
 
-  * 將 pixel prediction 平均成 zone，和 zone 標籤比較（若可取得）
-  * 評估：
+### 1. Dataset split 與 protocol
 
-    * zone-level MAE
-    * zone-level ±1 accuracy。
+* **UC Merced**：
 
-### 9.2 比較方法（Baselines）
+  * Train/Val/Test 60/20/20 split（或 50/20/30），確保每類都平均。
+  * 對 test set 建立多個縮放版本：
 
-1. **CE-UNet**：
+    * $s \in {0.7, 0.85, 1.0, 1.15, 1.3}$。
+    * 每個 $s$ 都形成一個 test subset。
+* **EuroSAT（選配）**：
 
-   * multi-class cross-entropy，視等級為 nominal class。
-2. **Reg-UNet**：
+  * 使用標準 train/test split，類似方式建立縮放 test set。([arXiv][6])
 
-   * 直接 regression 到 1–5，使用 L2 / L1 loss。
-3. **Ord-UNet**：
+### 2. Baselines
 
-   * 使用既有 ordinal loss（例如 cumulative link / CORAL / EMD），
-     但沒有 zone regularization。
-4. **Zelpha（Ours）**：
+1. **Vanilla CNN**：ResNet-18 / ResNet-34，不做特殊 scale-equivariant 設計。
+2. **Data-aug only CNN**：加強 random resize/crop as augmentation，但無 Lipschitz、無 prototype。
+3. **Scale-equivariant CNN**：參考 scale-equivariant conv 網路設計一個 baseline。([arXiv][3])
+4. **Lipschitz CNN**：只加 spectral norm + Lipschitz regularization，但 classifier 用標準 linear head。
 
-   * Pixel-wise ordinal + zone-level + smoothness regularizer。
+→ ZELPHA 則是 **scale-equivariant + Lipschitz + prototype** 全部都有。
 
-### 9.3 Ablation Studies
+### 3. 評估指標
 
-* 移除不同項目：
+* **Accuracy vs. scale factor**：
 
-  * no-zone（只保留 pixel ordinal）
-  * no-smooth（移除 Laplacian 項）
-  * no-shared encoder（每 crop 單獨訓練）
-* 改變 (\lambda,\mu) 大小，觀察
+  * 畫出每個模型在不同 $s$ 的 accuracy 曲線，看誰的 degradation 最小。
+* **Robust accuracy**：
 
-  * zone-level vs pixel-level 的 performance trade-off
-  * class imbalance 時是否更穩定。
+  * 對每張 test image 取所有縮放版本，若「對所有 $s$ 都分類正確」才算 1。
+* **Margin 分析**：
 
-### 9.4 分析與可視化
+  * 測量 ZELPHA 在 feature space 的 margin 分佈，對比 robustness。
+* **Calibration / Uncertainty（選配）**：
 
-* **潛在適宜度場的連續 map**：
+  * 看在大縮放 shift 下，模型的不確定性有沒有變大；可算 ECE。
 
-  * 直接畫出 (f_\theta(x,c)) 的連續值，而不是只看 5 級等級。
-* **等級邊界 vs 閾值位置**：
+### 4. Ablation studies
 
-  * 分析學到的閾值 (\tau_k) 是否與土壤／地形特徵有關聯。
-* **錯誤案例分析**：
+* 移除 Lipschitz regularization → 看 robustness 掉多少。
+* 不用 prototype-based classifier，改 linear head → 比較 margin 與 scale robustness。
+* 不做 scale pooling，只做 data augmentation → 看哪一部分貢獻最大。
 
-  * 看看模型是否主要在「相鄰等級」錯誤（符合實務可接受性）。
+---
+
+[1]: https://weegee.vision.ucmerced.edu/datasets/landuse.html?utm_source=chatgpt.com "UC Merced Land Use Dataset"
+[2]: https://github.com/phelber/EuroSAT?utm_source=chatgpt.com "EuroSAT: Land Use and Land Cover Classification with ..."
+[3]: https://arxiv.org/abs/1910.11093?utm_source=chatgpt.com "[1910.11093] Scale-Equivariant Steerable Networks"
+[4]: https://www.broadinstitute.org/talks/efficient-lipschitz-constrained-neural-networks?utm_source=chatgpt.com "Efficient Lipschitz-constrained neural networks"
+[5]: https://papers.neurips.cc/paper/7640-lipschitz-regularity-of-deep-neural-networks-analysis-and-efficient-estimation.pdf?utm_source=chatgpt.com "Lipschitz regularity of deep neural networks"
+[6]: https://arxiv.org/abs/1709.00029?utm_source=chatgpt.com "EuroSAT: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification"
