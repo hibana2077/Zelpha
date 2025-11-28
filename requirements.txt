@@ -18,6 +18,7 @@ scikit-image
 # File formats
 pyarrow
 fastparquet
+datasets
 
 # Experiment tracking and visualization
 wandb
