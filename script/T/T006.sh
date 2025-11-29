@@ -21,5 +21,5 @@ python3 src/train.py \
     --num_prototypes 8 \
     --beta 1.0 \
     --margin 0.5 \
-    --image_size 384 \
+    --image_size 224 \
     --linear_epochs 50 --finetune_epochs 30 >> logs/T006.log 2>&1
