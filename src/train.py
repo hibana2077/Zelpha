@@ -349,7 +349,7 @@ def main():
             for images, labels in val_loader:
                 images, labels = images.to(device), labels.to(device)
                 logits, _, _ = model(images)
-                a1, _, _ = calculate_metrics(logits, labels)
+                a1, _, _ = calculate_metrics(logits, labels, num_classes=model.num_classes)
                 val_acc1_sum += a1
                 val_batches += 1
         val_acc = val_acc1_sum / val_batches
@@ -398,7 +398,7 @@ def main():
             for images, labels in val_loader:
                 images, labels = images.to(device), labels.to(device)
                 logits, _, dist_sq = model(images)
-                a1, _, _ = calculate_metrics(logits, labels)
+                a1, _, _ = calculate_metrics(logits, labels, num_classes=model.num_classes)
                 val_acc1_sum += a1
                 val_batches += 1
         val_acc = val_acc1_sum / val_batches
