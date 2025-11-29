@@ -18,4 +18,5 @@ cd ../..
 # Run training with T005
 python3 src/train.py \
     --model_name deit3_small_patch16_224.fb_in1k \
+    --image_size 384 \
     --linear_epochs 50 --finetune_epochs 30 >> logs/T005.log 2>&1

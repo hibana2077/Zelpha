@@ -8,11 +8,11 @@ from PIL import Image
 
 class ScaleTransform:
     """
-    Applies scaling to the image.
-    s > 1: Zoom in (Resize larger -> Center Crop)
-    s < 1: Zoom out (Resize smaller -> Pad)
+    Applies scaling to the image relative to a target size.
+    s > 1: Zoom in (Resize larger then center crop)
+    s < 1: Zoom out (Resize smaller then pad)
     """
-    def __init__(self, scale, target_size=(256, 256)):
+    def __init__(self, scale, target_size):
         self.scale = scale
         self.target_size = target_size
 
@@ -44,11 +44,12 @@ class ScaleTransform:
         return img
 
 class UCMercedDataset(Dataset):
-    def __init__(self, hf_dataset, transform=None, scale=1.0):
+    def __init__(self, hf_dataset, transform=None, scale=1.0, image_size=256):
         self.dataset = hf_dataset
         self.base_transform = transform
-        self.scale_transform = ScaleTransform(scale) if scale != 1.0 else None
-        self.default_resize = transforms.Resize((256, 256))
+        target_size = (image_size, image_size)
+        self.scale_transform = ScaleTransform(scale, target_size=target_size) if scale != 1.0 else None
+        self.default_resize = transforms.Resize(target_size)
 
     def __len__(self):
         return len(self.dataset)
@@ -70,7 +71,7 @@ class UCMercedDataset(Dataset):
 
         return image, label
 
-def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1.15, 1.3]):
+def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1.15, 1.3], image_size=256):
     # Load dataset
     print("Loading UC Merced dataset...")
     dataset = load_dataset("blanchon/UC_Merced", split="train")
@@ -106,8 +107,8 @@ def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1
     ])
 
     # Datasets
-    train_ds = UCMercedDataset(train_set, transform=train_transform)
-    val_ds = UCMercedDataset(val_set, transform=eval_transform)
+    train_ds = UCMercedDataset(train_set, transform=train_transform, image_size=image_size)
+    val_ds = UCMercedDataset(val_set, transform=eval_transform, image_size=image_size)
     
     # Loaders
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
@@ -116,7 +117,7 @@ def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1
     # Test Loaders for each scale
     test_loaders = {}
     for s in test_scales:
-        test_ds = UCMercedDataset(test_set, transform=eval_transform, scale=s)
+        test_ds = UCMercedDataset(test_set, transform=eval_transform, scale=s, image_size=image_size)
         test_loaders[s] = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, val_loader, test_loaders

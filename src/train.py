@@ -292,6 +292,7 @@ def main():
     parser.add_argument('--num_prototypes', type=int, default=3, help='Number of prototypes per class')
     parser.add_argument('--beta', type=float, default=0.1, help='Weight for prototype loss (intra/inter)')
     parser.add_argument('--margin', type=float, default=1.0, help='Margin for inter-class loss')
+    parser.add_argument('--image_size', type=int, default=256, help='Input image size (square).')
     
     args = parser.parse_args()
     
@@ -301,7 +302,7 @@ def main():
     print(f"Prototype Config: K={args.num_prototypes}, Beta={args.beta}, Margin={args.margin}")
     
     # Data
-    train_loader, val_loader, test_loaders = get_dataloaders(batch_size=args.batch_size)
+    train_loader, val_loader, test_loaders = get_dataloaders(batch_size=args.batch_size, image_size=args.image_size)
     
     # Print dataset info
     print(f"\nDataset Info:")
@@ -325,7 +326,7 @@ def main():
     
     # FLOPs & Params
     try:
-        macs, params = get_model_complexity_info(model, (3, 256, 256), as_strings=True, print_per_layer_stat=False, verbose=False)
+        macs, params = get_model_complexity_info(model, (3, args.image_size, args.image_size), as_strings=True, print_per_layer_stat=False, verbose=False)
         print(f'{args.model_name:<30}  {macs:<8} GMACs   {params:<8} params')
     except Exception as e:
         print(f"Could not calculate FLOPs: {e}")
