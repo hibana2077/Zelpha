@@ -54,7 +54,7 @@ class ZelphaLoss(nn.Module):
         total_loss = loss_ce + self.lambda_intra * loss_intra + self.lambda_inter * loss_inter
         
         return total_loss, {
-            "loss_ce": loss_ce.item(),
-            "loss_intra": loss_intra.item(),
-            "loss_inter": loss_inter.item()
+            "loss_ce": loss_ce,
+            "loss_intra": loss_intra,
+            "loss_inter": loss_inter
         }
