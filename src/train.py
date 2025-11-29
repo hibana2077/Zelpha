@@ -293,6 +293,7 @@ def main():
     parser.add_argument('--beta', type=float, default=0.1, help='Weight for prototype loss (intra/inter)')
     parser.add_argument('--margin', type=float, default=1.0, help='Margin for inter-class loss')
     parser.add_argument('--image_size', type=int, default=256, help='Input image size (square).')
+    parser.add_argument('--save_dir', type=str, default='', help='(Unused for disk) Kept for compatibility; checkpoints kept in memory.')
     
     args = parser.parse_args()
     
@@ -331,6 +332,12 @@ def main():
     except Exception as e:
         print(f"Could not calculate FLOPs: {e}")
 
+    # Track best checkpoints in memory (no disk writes)
+    best_linear_acc = -1.0
+    best_proto_acc = -1.0
+    best_linear_state = None
+    best_proto_state = None
+
     # --- Phase 1: Linear Training ---
     print("\n=== Phase 1: Linear Classifier Training ===")
     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
@@ -355,12 +362,19 @@ def main():
                 val_batches += 1
         val_acc = val_acc1_sum / val_batches
         
-        print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f}")
+        # Keep best linear model by val_acc in memory
+        if val_acc > best_linear_acc:
+            best_linear_acc = val_acc
+            best_linear_state = {k: v.clone().detach() for k, v in model.state_dict().items()}
+        print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f} (best {best_linear_acc:.4f})")
         scheduler.step()
 
     # --- Phase 2: Prototype Initialization ---
     print("\n=== Phase 2: Prototype Initialization ===")
     # Switch to Prototype Head
+    # Load best Phase 1 (linear) weights before switching head
+    if best_linear_state is not None:
+        model.load_state_dict(best_linear_state, strict=False)
     model.set_classifier(type='prototype', num_prototypes=args.num_prototypes)
     model.to(device)
     
@@ -404,8 +418,17 @@ def main():
                 val_batches += 1
         val_acc = val_acc1_sum / val_batches
         
-        print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f}")
+        # Keep best prototype model by val_acc in memory
+        if val_acc > best_proto_acc:
+            best_proto_acc = val_acc
+            best_proto_state = {k: v.clone().detach() for k, v in model.state_dict().items()}
+        print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f} (best {best_proto_acc:.4f})")
         scheduler.step()
+
+    # Load best prototype checkpoint before final evaluation (if kept in memory)
+    if best_proto_state is not None:
+        model.load_state_dict(best_proto_state, strict=False)
+        model.to(device)
 
     # Final Evaluation
     results = evaluate(model, test_loaders, device, use_prototype=True)
