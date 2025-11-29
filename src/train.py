@@ -273,11 +273,14 @@ def main():
     train_loader, val_loader, test_loaders = get_dataloaders(batch_size=args.batch_size)
     
     # Print dataset info
-    num_classes = len(train_loader.dataset.dataset.classes)
     print(f"\nDataset Info:")
-    print(f"Number of classes: {num_classes}")
     print(f"Training samples: {len(train_loader.dataset)}")
     print(f"Validation samples: {len(val_loader.dataset)}")
+    
+    # Get number of classes from a batch
+    sample_batch = next(iter(train_loader))
+    num_classes_detected = len(torch.unique(sample_batch[1]))
+    print(f"Number of classes (detected from batch): {num_classes_detected}")
     
     # Model - Start with Linear Head
     model = ZelphaModel(
