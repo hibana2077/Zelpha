@@ -15,7 +15,10 @@ export HF_HOME="/scratch/rp06/sl5952/Zelpha/.cache"
 export HF_HUB_OFFLINE=1
 
 cd ../..
-# Run training with T003
+# Run training with T004
 python3 src/train.py \
     --model_name resnet18 \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/T003.log 2>&1
+    --num_prototypes 8 \
+    --beta 1.0 \
+    --margin 0.5 \
+    --linear_epochs 50 --finetune_epochs 30 >> logs/T004.log 2>&1
