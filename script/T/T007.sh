@@ -18,5 +18,6 @@ cd ../..
 # Run training with T007
 python3 src/train.py \
     --model_name eva_giant_patch14_224.clip_ft_in1k \
+    --batch_size 16 \
     --image_size 224 \
     --linear_epochs 50 --finetune_epochs 30 >> logs/T007.log 2>&1

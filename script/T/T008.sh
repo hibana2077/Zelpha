@@ -18,6 +18,7 @@ cd ../..
 # Run training with T008
 python3 src/train.py \
     --model_name eva_giant_patch14_224.clip_ft_in1k \
+    --batch_size 16 \
     --num_prototypes 8 \
     --beta 1.0 \
     --margin 0.5 \
