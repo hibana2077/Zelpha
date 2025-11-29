@@ -12,7 +12,7 @@ from dataset import get_dataloaders
 from model import ZelphaModel
 from loss import ZelphaLoss
 
-def calculate_metrics(logits, labels):
+def calculate_metrics(logits, labels, num_classes=None):
     """
     Calculates Top-1, Top-5 Accuracy and F1 Score.
     """
@@ -32,7 +32,18 @@ def calculate_metrics(logits, labels):
         acc5 /= labels.size(0)
         
         # F1 Score (Macro)
-        f1 = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro', zero_division=0)
+        # Pass explicit label set to avoid sklearn classification/regression ambiguity warnings
+        if num_classes is not None:
+            label_set = np.arange(num_classes)
+            f1 = f1_score(
+                labels.cpu().numpy(),
+                preds.cpu().numpy(),
+                average='macro',
+                zero_division=0,
+                labels=label_set,
+            )
+        else:
+            f1 = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro', zero_division=0)
         
     return acc1, acc5, f1
 
@@ -75,6 +86,25 @@ def calculate_margin(logits, dist_sq, labels, use_prototype=True):
     margins = min_other_dists - target_dists
     return margins
 
+def select_device(requested: str):
+    """Resolve best available device based on requested string.
+    Supports 'auto', 'cuda', 'mps', and 'cpu'. Falls back gracefully.
+    """
+    req = (requested or "auto").lower()
+    if req == "auto":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+        return torch.device("cpu")
+    if req == "cuda":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if req == "mps":
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+        return torch.device("cpu")
+    return torch.device("cpu")
+
 def train_one_epoch(model, loader, optimizer, criterion, device, epoch, use_prototype=True):
     model.train()
     running_loss = 0.0
@@ -106,7 +136,7 @@ def train_one_epoch(model, loader, optimizer, criterion, device, epoch, use_prot
         running_loss += loss.item()
         
         # Calculate metrics
-        a1, a5, f1 = calculate_metrics(logits, labels)
+        a1, a5, f1 = calculate_metrics(logits, labels, num_classes=model.num_classes)
         acc1_sum += a1
         acc5_sum += a5
         f1_sum += f1
@@ -195,7 +225,7 @@ def evaluate(model, test_loaders, device, use_prototype=True):
                 logits, _, dist_sq = model(images)
                 
                 # Metrics
-                a1, a5, f1 = calculate_metrics(logits, labels)
+                a1, a5, f1 = calculate_metrics(logits, labels, num_classes=model.num_classes)
                 acc1_sum += a1
                 acc5_sum += a5
                 f1_sum += f1
@@ -251,7 +281,7 @@ def main():
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--finetune_lr', type=float, default=0.0001, help='Learning rate for fine-tuning')
     parser.add_argument('--proto_lr_scale', type=float, default=0.1, help='Scale factor for prototype learning rate')
-    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    parser.add_argument('--device', type=str, default='auto', help="Device: 'auto'|'cuda'|'mps'|'cpu'")
     
     # Model & Ablation Args
     parser.add_argument('--model_name', type=str, default='zelpha', help='Model name: zelpha or timm model name (e.g. resnet18)')
@@ -265,7 +295,8 @@ def main():
     
     args = parser.parse_args()
     
-    print(f"Using device: {args.device}")
+    device = select_device(args.device)
+    print(f"Using device: {device.type}")
     print(f"Configuration: Model={args.model_name}, Lipschitz={not args.no_lipschitz}, ScalePool={not args.no_scale_pooling}")
     print(f"Prototype Config: K={args.num_prototypes}, Beta={args.beta}, Margin={args.margin}")
     
@@ -290,7 +321,7 @@ def main():
         use_prototype=False, # Start with Linear
         use_scale_pooling=not args.no_scale_pooling,
         num_prototypes=args.num_prototypes
-    ).to(args.device)
+    ).to(device)
     
     # FLOPs & Params
     try:
@@ -306,7 +337,7 @@ def main():
     
     for epoch in range(args.linear_epochs):
         train_metrics = train_one_epoch(
-            model, train_loader, optimizer, None, args.device, epoch, 
+            model, train_loader, optimizer, None, device, epoch, 
             use_prototype=False
         )
         
@@ -316,7 +347,7 @@ def main():
         val_batches = 0
         with torch.no_grad():
             for images, labels in val_loader:
-                images, labels = images.to(args.device), labels.to(args.device)
+                images, labels = images.to(device), labels.to(device)
                 logits, _, _ = model(images)
                 a1, _, _ = calculate_metrics(logits, labels)
                 val_acc1_sum += a1
@@ -330,10 +361,10 @@ def main():
     print("\n=== Phase 2: Prototype Initialization ===")
     # Switch to Prototype Head
     model.set_classifier(type='prototype', num_prototypes=args.num_prototypes)
-    model.to(args.device)
+    model.to(device)
     
     # Initialize Prototypes
-    initialize_prototypes_kmeans(model, train_loader, args.device, num_prototypes=args.num_prototypes)
+    initialize_prototypes_kmeans(model, train_loader, device, num_prototypes=args.num_prototypes)
     
     # --- Phase 3: Prototype Fine-tuning ---
     print("\n=== Phase 3: Prototype Fine-tuning ===")
@@ -355,7 +386,7 @@ def main():
     
     for epoch in range(args.finetune_epochs):
         train_metrics = train_one_epoch(
-            model, train_loader, optimizer, criterion, args.device, epoch, 
+            model, train_loader, optimizer, criterion, device, epoch, 
             use_prototype=True
         )
         
@@ -365,7 +396,7 @@ def main():
         val_batches = 0
         with torch.no_grad():
             for images, labels in val_loader:
-                images, labels = images.to(args.device), labels.to(args.device)
+                images, labels = images.to(device), labels.to(device)
                 logits, _, dist_sq = model(images)
                 a1, _, _ = calculate_metrics(logits, labels)
                 val_acc1_sum += a1
@@ -376,7 +407,7 @@ def main():
         scheduler.step()
 
     # Final Evaluation
-    results = evaluate(model, test_loaders, args.device, use_prototype=True)
+    results = evaluate(model, test_loaders, device, use_prototype=True)
     print("\nFinal Results:")
     for k, v in results.items():
         print(f"{k}: {v:.4f}")
