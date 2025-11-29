@@ -6,6 +6,7 @@ import numpy as np
 import os
 from ptflops import get_model_complexity_info
 from sklearn.metrics import f1_score
+from sklearn.cluster import KMeans
 
 from dataset import get_dataloaders
 from model import ZelphaModel
@@ -74,7 +75,7 @@ def calculate_margin(logits, dist_sq, labels, use_prototype=True):
     margins = min_other_dists - target_dists
     return margins
 
-def train_one_epoch(model, loader, optimizer, criterion, device, epoch, warmup=False, use_prototype=True):
+def train_one_epoch(model, loader, optimizer, criterion, device, epoch, use_prototype=True):
     model.train()
     running_loss = 0.0
     
@@ -94,14 +95,6 @@ def train_one_epoch(model, loader, optimizer, criterion, device, epoch, warmup=F
         # Handle loss calculation based on head type
         if use_prototype:
             mu = model.classifier.mu
-        else:
-            mu = None # Not used for linear head loss usually, or handled differently
-
-        if warmup and use_prototype:
-            # Only CE loss during warmup for prototype model
-            loss, metrics = criterion(logits, dist_sq, labels, mu)
-            loss = metrics['loss_ce'] 
-        elif use_prototype:
             loss, metrics = criterion(logits, dist_sq, labels, mu)
         else:
             # Linear head standard CE
@@ -129,14 +122,11 @@ def train_one_epoch(model, loader, optimizer, criterion, device, epoch, warmup=F
         'f1': f1_sum / num_batches
     }
 
-def update_prototypes(model, loader, device):
+def initialize_prototypes_kmeans(model, loader, device, num_prototypes=1):
     """
-    Updates prototypes to be the mean of features for each class.
-    Used during warmup.
+    Initializes prototypes using K-Means on the features of each class.
     """
-    if not hasattr(model.classifier, 'mu'):
-        return
-
+    print("Initializing prototypes with K-Means...")
     model.eval()
     all_feats = []
     all_labels = []
@@ -144,21 +134,37 @@ def update_prototypes(model, loader, device):
         for images, labels in loader:
             images = images.to(device)
             z = model.backbone(images)
-            all_feats.append(z)
-            all_labels.append(labels)
+            all_feats.append(z.cpu())
+            all_labels.append(labels.cpu())
             
-    all_feats = torch.cat(all_feats, dim=0)
-    all_labels = torch.cat(all_labels, dim=0).to(device)
+    all_feats = torch.cat(all_feats, dim=0).numpy()
+    all_labels = torch.cat(all_labels, dim=0).numpy()
     
-    new_mu = model.classifier.mu.data.clone()
-    for c in range(model.classifier.num_classes):
+    num_classes = model.num_classes
+    feature_dim = model.feature_dim
+    
+    new_mu = torch.zeros(num_classes, num_prototypes, feature_dim)
+    
+    for c in range(num_classes):
         mask = (all_labels == c)
-        if mask.sum() > 0:
-            class_mean = all_feats[mask].mean(dim=0)
-            new_mu[c] = class_mean
+        class_feats = all_feats[mask]
+        
+        if len(class_feats) < num_prototypes:
+            # Fallback if not enough samples: just repeat mean
+            if len(class_feats) > 0:
+                mean = np.mean(class_feats, axis=0)
+                new_mu[c] = torch.tensor(mean).unsqueeze(0).repeat(num_prototypes, 1)
+            else:
+                # No samples? Random init
+                new_mu[c] = torch.randn(num_prototypes, feature_dim)
+        else:
+            kmeans = KMeans(n_clusters=num_prototypes, n_init=10, random_state=42)
+            kmeans.fit(class_feats)
+            centers = kmeans.cluster_centers_
+            new_mu[c] = torch.tensor(centers)
             
-    model.classifier.mu.data = new_mu
-    print("Prototypes updated to class means.")
+    model.classifier.mu.data = new_mu.to(device)
+    print("Prototypes initialized.")
 
 def evaluate(model, test_loaders, device, use_prototype=True):
     model.eval()
@@ -239,33 +245,41 @@ def evaluate(model, test_loaders, device, use_prototype=True):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=20)
+    parser.add_argument('--linear_epochs', type=int, default=10, help='Epochs for linear classifier training')
+    parser.add_argument('--finetune_epochs', type=int, default=10, help='Epochs for prototype fine-tuning')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--warmup_epochs', type=int, default=5)
+    parser.add_argument('--finetune_lr', type=float, default=0.0001, help='Learning rate for fine-tuning')
+    parser.add_argument('--proto_lr_scale', type=float, default=0.1, help='Scale factor for prototype learning rate')
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
     
     # Model & Ablation Args
     parser.add_argument('--model_name', type=str, default='zelpha', help='Model name: zelpha or timm model name (e.g. resnet18)')
     parser.add_argument('--no_lipschitz', action='store_true', help='Disable spectral normalization')
-    parser.add_argument('--no_prototype', action='store_true', help='Use linear head instead of prototype')
     parser.add_argument('--no_scale_pooling', action='store_true', help='Disable multi-scale pooling (use only scale 1.0)')
+    
+    # Prototype Args
+    parser.add_argument('--num_prototypes', type=int, default=3, help='Number of prototypes per class')
+    parser.add_argument('--beta', type=float, default=0.1, help='Weight for prototype loss (intra/inter)')
+    parser.add_argument('--margin', type=float, default=1.0, help='Margin for inter-class loss')
     
     args = parser.parse_args()
     
     print(f"Using device: {args.device}")
-    print(f"Configuration: Model={args.model_name}, Lipschitz={not args.no_lipschitz}, Proto={not args.no_prototype}, ScalePool={not args.no_scale_pooling}")
+    print(f"Configuration: Model={args.model_name}, Lipschitz={not args.no_lipschitz}, ScalePool={not args.no_scale_pooling}")
+    print(f"Prototype Config: K={args.num_prototypes}, Beta={args.beta}, Margin={args.margin}")
     
     # Data
     train_loader, val_loader, test_loaders = get_dataloaders(batch_size=args.batch_size)
     
-    # Model
+    # Model - Start with Linear Head
     model = ZelphaModel(
         num_classes=21, 
         model_name=args.model_name,
         use_spectral_norm=not args.no_lipschitz,
-        use_prototype=not args.no_prototype,
-        use_scale_pooling=not args.no_scale_pooling
+        use_prototype=False, # Start with Linear
+        use_scale_pooling=not args.no_scale_pooling,
+        num_prototypes=args.num_prototypes
     ).to(args.device)
     
     # FLOPs & Params
@@ -275,23 +289,17 @@ def main():
     except Exception as e:
         print(f"Could not calculate FLOPs: {e}")
 
-    # Loss & Optimizer
-    criterion = ZelphaLoss()
+    # --- Phase 1: Linear Training ---
+    print("\n=== Phase 1: Linear Classifier Training ===")
     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.linear_epochs)
     
-    # Training Loop
-    for epoch in range(args.epochs):
-        is_warmup = epoch < args.warmup_epochs
-        
+    for epoch in range(args.linear_epochs):
         train_metrics = train_one_epoch(
-            model, train_loader, optimizer, criterion, args.device, epoch, 
-            warmup=is_warmup, use_prototype=not args.no_prototype
+            model, train_loader, optimizer, None, args.device, epoch, 
+            use_prototype=False
         )
         
-        if is_warmup and not args.no_prototype:
-            update_prototypes(model, train_loader, args.device)
-            
         # Validation
         model.eval()
         val_acc1_sum = 0
@@ -306,11 +314,59 @@ def main():
         val_acc = val_acc1_sum / val_batches
         
         print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f}")
+        scheduler.step()
+
+    # --- Phase 2: Prototype Initialization ---
+    print("\n=== Phase 2: Prototype Initialization ===")
+    # Switch to Prototype Head
+    model.set_classifier(type='prototype', num_prototypes=args.num_prototypes)
+    model.to(args.device)
+    
+    # Initialize Prototypes
+    initialize_prototypes_kmeans(model, train_loader, args.device, num_prototypes=args.num_prototypes)
+    
+    # --- Phase 3: Prototype Fine-tuning ---
+    print("\n=== Phase 3: Prototype Fine-tuning ===")
+    
+    # Loss
+    criterion = ZelphaLoss(lambda_intra=args.beta, lambda_inter=args.beta, margin=args.margin)
+    
+    # Optimizer with different LR for prototypes
+    # Separate parameters
+    backbone_params = list(model.backbone.parameters())
+    classifier_params = list(model.classifier.parameters())
+    
+    optimizer = optim.AdamW([
+        {'params': backbone_params, 'lr': args.finetune_lr},
+        {'params': classifier_params, 'lr': args.finetune_lr * args.proto_lr_scale} # Slower update for prototypes
+    ])
+    
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.finetune_epochs)
+    
+    for epoch in range(args.finetune_epochs):
+        train_metrics = train_one_epoch(
+            model, train_loader, optimizer, criterion, args.device, epoch, 
+            use_prototype=True
+        )
         
+        # Validation
+        model.eval()
+        val_acc1_sum = 0
+        val_batches = 0
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(args.device), labels.to(args.device)
+                logits, _, dist_sq = model(images)
+                a1, _, _ = calculate_metrics(logits, labels)
+                val_acc1_sum += a1
+                val_batches += 1
+        val_acc = val_acc1_sum / val_batches
+        
+        print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f}")
         scheduler.step()
 
     # Final Evaluation
-    results = evaluate(model, test_loaders, args.device, use_prototype=not args.no_prototype)
+    results = evaluate(model, test_loaders, args.device, use_prototype=True)
     print("\nFinal Results:")
     for k, v in results.items():
         print(f"{k}: {v:.4f}")

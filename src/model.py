@@ -90,28 +90,35 @@ class TimmBackbone(nn.Module):
         return x
 
 class PrototypeHead(nn.Module):
-    def __init__(self, num_classes, feature_dim):
+    def __init__(self, num_classes, feature_dim, num_prototypes=1):
         super().__init__()
         self.num_classes = num_classes
         self.feature_dim = feature_dim
-        # Initialize prototypes
-        self.mu = nn.Parameter(torch.randn(num_classes, feature_dim))
+        self.num_prototypes = num_prototypes
+        # Initialize prototypes: [C, K, D]
+        self.mu = nn.Parameter(torch.randn(num_classes, num_prototypes, feature_dim))
 
     def forward(self, z):
         # z: [B, D]
-        # mu: [C, D]
+        # mu: [C, K, D]
         
-        # Calculate squared Euclidean distance
-        # |z - mu|^2 = |z|^2 + |mu|^2 - 2*z*mu^T
+        # Expand z: [B, 1, 1, D]
+        z_expanded = z.unsqueeze(1).unsqueeze(1) # [B, 1, 1, D]
         
-        z_sq = z.pow(2).sum(dim=1, keepdim=True) # [B, 1]
-        mu_sq = self.mu.pow(2).sum(dim=1, keepdim=True).t() # [1, C]
+        # Expand mu: [1, C, K, D]
+        mu_expanded = self.mu.unsqueeze(0) # [1, C, K, D]
         
-        dist_sq = z_sq + mu_sq - 2 * torch.mm(z, self.mu.t()) # [B, C]
+        # Dist sq: |z - mu|^2 = sum((z - mu)^2, dim=-1)
+        # [B, C, K]
+        dist_sq = (z_expanded - mu_expanded).pow(2).sum(dim=-1)
         
-        # Logits = -Distance
-        logits = -dist_sq
-        return logits, dist_sq
+        # Min distance per class: [B, C]
+        min_dist_sq, _ = dist_sq.min(dim=2)
+        
+        # Logits = -min_dist_sq
+        logits = -min_dist_sq
+        
+        return logits, min_dist_sq
 
 class LinearHead(nn.Module):
     def __init__(self, num_classes, feature_dim):
@@ -125,7 +132,8 @@ class LinearHead(nn.Module):
 class ZelphaModel(nn.Module):
     def __init__(self, num_classes=21, feature_dim=128, 
                  model_name='zelpha', scales=[0.8, 1.0, 1.2],
-                 use_spectral_norm=True, use_prototype=True, use_scale_pooling=True):
+                 use_spectral_norm=True, use_prototype=True, use_scale_pooling=True,
+                 num_prototypes=1):
         super().__init__()
         
         # Backbone Selection
@@ -138,10 +146,24 @@ class ZelphaModel(nn.Module):
             self.backbone = TimmBackbone(model_name, feature_dim)
 
         # Head Selection
+        self.num_classes = num_classes
+        self.feature_dim = feature_dim
+        self.num_prototypes = num_prototypes
+        
         if use_prototype:
-            self.classifier = PrototypeHead(num_classes, feature_dim)
+            self.classifier = PrototypeHead(num_classes, feature_dim, num_prototypes)
         else:
             self.classifier = LinearHead(num_classes, feature_dim)
+
+    def set_classifier(self, type='linear', num_prototypes=None):
+        if num_prototypes is None:
+            num_prototypes = self.num_prototypes
+            
+        if type == 'linear':
+            self.classifier = LinearHead(self.num_classes, self.feature_dim)
+        elif type == 'prototype':
+            self.classifier = PrototypeHead(self.num_classes, self.feature_dim, num_prototypes)
+            self.num_prototypes = num_prototypes
 
     def forward(self, x):
         z = self.backbone(x)
