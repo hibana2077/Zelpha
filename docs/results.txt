@@ -136,3 +136,72 @@ margin_mean: 0.3244
 margin_std: 2.2008
 margin_min: -8.3269
 margin_max: 9.0211
+---
+python3 src/train.py --num_prototypes 3 --beta 0.1 --margin 1.0 --linear_epochs 10 --finetune_epochs 10
+Final Results:
+scale_0.7_acc1: 0.1987
+scale_0.7_acc5: 0.5536
+scale_0.7_f1: 0.1246
+scale_0.85_acc1: 0.3705
+scale_0.85_acc5: 0.8170
+scale_0.85_f1: 0.3012
+scale_1.0_acc1: 0.7076
+scale_1.0_acc5: 0.9531
+scale_1.0_f1: 0.6185
+scale_1.15_acc1: 0.6295
+scale_1.15_acc5: 0.9375
+scale_1.15_f1: 0.5386
+scale_1.3_acc1: 0.5647
+scale_1.3_acc5: 0.8996
+scale_1.3_f1: 0.4663
+robust_acc: 0.1000
+margin_mean: 0.1495
+margin_std: 1.5046
+margin_min: -6.3189
+margin_max: 5.3975
+---
+python3 src/train.py --num_prototypes 3 --beta 0.01 --margin 0.5 --linear_epochs 10 --finetune_epochs 10
+Final Results:
+scale_0.7_acc1: 0.2411
+scale_0.7_acc5: 0.5223
+scale_0.7_f1: 0.1678
+scale_0.85_acc1: 0.3147
+scale_0.85_acc5: 0.6629
+scale_0.85_f1: 0.2441
+scale_1.0_acc1: 0.7076
+scale_1.0_acc5: 0.9777
+scale_1.0_f1: 0.6175
+scale_1.15_acc1: 0.6496
+scale_1.15_acc5: 0.9576
+scale_1.15_f1: 0.5705
+scale_1.3_acc1: 0.6272
+scale_1.3_acc5: 0.9442
+scale_1.3_f1: 0.5274
+robust_acc: 0.1119
+margin_mean: 0.1308
+margin_std: 1.4095
+margin_min: -5.7836
+margin_max: 5.5330
+---
+python3 src/train.py --num_prototypes 3 --beta 0.1 --margin 1.0 --linear_epochs 50 --finetune_epochs 30
+Final Results:
+scale_0.7_acc1: 0.3036
+scale_0.7_acc5: 0.7009
+scale_0.7_f1: 0.2178
+scale_0.85_acc1: 0.5290
+scale_0.85_acc5: 0.8839
+scale_0.85_f1: 0.4489
+scale_1.0_acc1: 0.8817
+scale_1.0_acc5: 0.9888
+scale_1.0_f1: 0.8167
+scale_1.15_acc1: 0.8348
+scale_1.15_acc5: 0.9866
+scale_1.15_f1: 0.7738
+scale_1.3_acc1: 0.8080
+scale_1.3_acc5: 0.9754
+scale_1.3_f1: 0.7297
+robust_acc: 0.1905
+margin_mean: 0.8541
+margin_std: 1.8891
+margin_min: -5.0411
+margin_max: 6.5464
