@@ -272,6 +272,13 @@ def main():
     # Data
     train_loader, val_loader, test_loaders = get_dataloaders(batch_size=args.batch_size)
     
+    # Print dataset info
+    num_classes = len(train_loader.dataset.dataset.classes)
+    print(f"\nDataset Info:")
+    print(f"Number of classes: {num_classes}")
+    print(f"Training samples: {len(train_loader.dataset)}")
+    print(f"Validation samples: {len(val_loader.dataset)}")
+    
     # Model - Start with Linear Head
     model = ZelphaModel(
         num_classes=21, 
