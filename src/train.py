@@ -277,7 +277,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--linear_epochs', type=int, default=10, help='Epochs for linear classifier training')
     parser.add_argument('--finetune_epochs', type=int, default=10, help='Epochs for prototype fine-tuning')
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--finetune_lr', type=float, default=0.0001, help='Learning rate for fine-tuning')
     parser.add_argument('--proto_lr_scale', type=float, default=0.1, help='Scale factor for prototype learning rate')
