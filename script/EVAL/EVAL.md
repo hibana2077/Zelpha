@@ -2,16 +2,16 @@
 
 | model | code | Zelpha | seed | robust accuracy (%) |
 |---|---|---|---|---|
-| deit3_small_patch16_224.fb_in1k | E001A | N | 222 | TBD |
-| deit3_small_patch16_224.fb_in1k | E001B | N | 333 | TBD |
-| deit3_small_patch16_224.fb_in1k | E001C | N | 444 | TBD |
-| deit3_small_patch16_224.fb_in1k | E001D | N | 555 | TBD |
-| deit3_small_patch16_224.fb_in1k | E001E | N | 666 | TBD |
-| deit3_small_patch16_224.fb_in1k | E002A | Y | 222 | TBD |
-| deit3_small_patch16_224.fb_in1k | E002B | Y | 333 | TBD |
-| deit3_small_patch16_224.fb_in1k | E002C | Y | 444 | TBD |
-| deit3_small_patch16_224.fb_in1k | E002D | Y | 555 | TBD |
-| deit3_small_patch16_224.fb_in1k | E002E | Y | 666 | TBD |
+| deit3_small_patch16_224.fb_in1k | E001A | N | 222 | 0.5595 |
+| deit3_small_patch16_224.fb_in1k | E001B | N | 333 | 0.5810 |
+| deit3_small_patch16_224.fb_in1k | E001C | N | 444 | 0.3976 |
+| deit3_small_patch16_224.fb_in1k | E001D | N | 555 | 0.4952 |
+| deit3_small_patch16_224.fb_in1k | E001E | N | 666 | 0.3881 |
+| deit3_small_patch16_224.fb_in1k | E002A | Y | 222 | 0.4643 |
+| deit3_small_patch16_224.fb_in1k | E002B | Y | 333 | 0.6190 |
+| deit3_small_patch16_224.fb_in1k | E002C | Y | 444 | 0.5881 |
+| deit3_small_patch16_224.fb_in1k | E002D | Y | 555 | 0.6024 |
+| deit3_small_patch16_224.fb_in1k | E002E | Y | 666 | 0.4952 |
 | repvgg_a0.rvgg_in1k | E003A | N | 222 | 0.3619 |
 | repvgg_a0.rvgg_in1k | E003B | N | 333 | TBD |
 | repvgg_a0.rvgg_in1k | E003C | N | 444 | TBD |
