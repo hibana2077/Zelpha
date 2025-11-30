@@ -21,4 +21,5 @@ python3 src/train.py \
     --num_prototypes 5 \
     --beta 0.1 \
     --margin 2.0 \
+    --image_size 256 \
     --linear_epochs 50 --finetune_epochs 50 >> logs/STMBK024.log 2>&1

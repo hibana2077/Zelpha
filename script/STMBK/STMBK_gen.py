@@ -55,6 +55,7 @@ python3 src/train.py \\
     --num_prototypes {num_prototypes} \\
     --beta {beta} \\
     --margin {margin} \\
+    --image_size 256 \\
     --linear_epochs {linear_epochs} --finetune_epochs {finetune_epochs} >> logs/{exp_id}.log 2>&1
 """
 
