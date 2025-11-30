@@ -17,7 +17,9 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with T007
 python3 src/train.py \
-    --model_name vit_base_patch8_224.augreg2_in21k_ft_in1k \
+    --model_name vit_small_patch16_rope_224.naver_in1k \
     --batch_size 16 \
     --image_size 224 \
+    --no_lipschitz \
+    --no_scale_pooling \
     --linear_epochs 50 --finetune_epochs 30 >> logs/T007.log 2>&1

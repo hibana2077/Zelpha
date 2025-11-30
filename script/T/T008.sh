@@ -17,7 +17,7 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with T008
 python3 src/train.py \
-    --model_name vit_base_patch8_224.augreg2_in21k_ft_in1k \
+    --model_name vit_small_patch16_rope_224.naver_in1k \
     --batch_size 16 \
     --num_prototypes 8 \
     --beta 1.0 \
