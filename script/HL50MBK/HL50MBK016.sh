@@ -17,7 +17,7 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with HL50MBK016: num_prototypes=3, beta=1.0, margin=0.5
 python3 src/train.py \
-    --model_name densenetblur121d.ra_in1k \
+    --model_name halonet50ts.a1h_in1k \
     --num_prototypes 3 \
     --beta 1.0 \
     --margin 0.5 \

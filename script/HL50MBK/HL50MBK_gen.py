@@ -51,7 +51,7 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with {exp_id}: num_prototypes={num_prototypes}, beta={beta}, margin={margin}
 python3 src/train.py \\
-    --model_name densenetblur121d.ra_in1k \\
+    --model_name halonet50ts.a1h_in1k \\
     --num_prototypes {num_prototypes} \\
     --beta {beta} \\
     --margin {margin} \\
