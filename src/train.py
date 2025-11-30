@@ -294,6 +294,9 @@ def main():
     parser.add_argument('--margin', type=float, default=1.0, help='Margin for inter-class loss')
     parser.add_argument('--image_size', type=int, default=256, help='Input image size (square).')
     parser.add_argument('--save_dir', type=str, default='', help='(Unused for disk) Kept for compatibility; checkpoints kept in memory.')
+
+    # Dataset Args
+    parser.add_argument('--dataset', type=str, default='UC_Merced', help='Dataset name (UC_Merced, EuroSAT, AID, etc.)')
     
     args = parser.parse_args()
     
@@ -302,22 +305,22 @@ def main():
     print(f"Configuration: Model={args.model_name}, Lipschitz={not args.no_lipschitz}, ScalePool={not args.no_scale_pooling}")
     print(f"Prototype Config: K={args.num_prototypes}, Beta={args.beta}, Margin={args.margin}")
     
-    # Data
-    train_loader, val_loader, test_loaders = get_dataloaders(batch_size=args.batch_size, image_size=args.image_size)
+    # Data (dataset-aware)
+    train_loader, val_loader, test_loaders, num_classes = get_dataloaders(
+        batch_size=args.batch_size,
+        image_size=args.image_size,
+        dataset_name=args.dataset,
+    )
     
     # Print dataset info
     print(f"\nDataset Info:")
     print(f"Training samples: {len(train_loader.dataset)}")
     print(f"Validation samples: {len(val_loader.dataset)}")
-    
-    # Get number of classes from a batch
-    sample_batch = next(iter(train_loader))
-    num_classes_detected = len(torch.unique(sample_batch[1]))
-    print(f"Number of classes (detected from batch): {num_classes_detected}")
+    print(f"Number of classes: {num_classes}")
     
     # Model - Start with Linear Head
     model = ZelphaModel(
-        num_classes=21, 
+        num_classes=num_classes, 
         model_name=args.model_name,
         use_spectral_norm=not args.no_lipschitz,
         use_prototype=False, # Start with Linear

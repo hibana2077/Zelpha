@@ -71,14 +71,33 @@ class UCMercedDataset(Dataset):
 
         return image, label
 
-def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1.15, 1.3], image_size=256):
+def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1.15, 1.3], image_size=256, dataset_name: str = "UC_Merced"):
+    # Resolve dataset ID
+    name_key = (dataset_name or "UC_Merced").lower()
+    dataset_map = {
+        "uc_merced": "blanchon/UC_Merced",
+        "ucmerced": "blanchon/UC_Merced",
+        "uc": "blanchon/UC_Merced",
+        "uc merced": "blanchon/UC_Merced",
+        "eurosat": "blanchon/EuroSAT_RGB",
+        "eurosat_rgb": "blanchon/EuroSAT_RGB",
+    }
+    hf_id = dataset_map.get(name_key, dataset_name)
+
     # Load dataset
-    print("Loading UC Merced dataset...")
-    dataset = load_dataset("blanchon/UC_Merced", split="train")
-    
+    print(f"Loading dataset: {dataset_name} ({hf_id})...")
+    try:
+        base_ds = load_dataset(hf_id, split="train")
+    except Exception:
+        # Fallback: load as DatasetDict and pick a split
+        dsdict = load_dataset(hf_id)
+        sel_split = "train" if "train" in dsdict else list(dsdict.keys())[0]
+        base_ds = dsdict[sel_split]
+        print(f"Using split: {sel_split}")
+
     # Split 60/20/20
     # First split train_val / test
-    train_val_test = dataset.train_test_split(test_size=0.2, seed=42, stratify_by_column="label")
+    train_val_test = base_ds.train_test_split(test_size=0.2, seed=42, stratify_by_column="label")
     test_set = train_val_test['test']
     train_val = train_val_test['train']
     
@@ -88,6 +107,20 @@ def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1
     val_set = train_val_split['test']
 
     print(f"Split sizes: Train={len(train_set)}, Val={len(val_set)}, Test={len(test_set)}")
+
+    # Determine number of classes
+    num_classes = None
+    try:
+        label_feat = base_ds.features.get("label", None)
+        if label_feat is not None and hasattr(label_feat, "names") and label_feat.names:
+            num_classes = len(label_feat.names)
+        elif label_feat is not None and hasattr(label_feat, "num_classes") and label_feat.num_classes:
+            num_classes = int(label_feat.num_classes)
+        else:
+            # Fallback to unique labels from a subset for speed
+            num_classes = len(set(base_ds[:2048]["label"]))
+    except Exception:
+        num_classes = len(set(base_ds[:2048]["label"]))
 
     # Transforms
     # Mean and Std for ImageNet are commonly used, or calculate for UCMerced
@@ -120,4 +153,4 @@ def get_dataloaders(batch_size=32, num_workers=4, test_scales=[0.7, 0.85, 1.0, 1
         test_ds = UCMercedDataset(test_set, transform=eval_transform, scale=s, image_size=image_size)
         test_loaders[s] = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    return train_loader, val_loader, test_loaders
+    return train_loader, val_loader, test_loaders, num_classes
