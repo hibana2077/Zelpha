@@ -18,12 +18,12 @@
 | repvgg_a0.rvgg_in1k | E004C | Y | 444 | TBD |
 | repvgg_a0.rvgg_in1k | E004D | Y | 555 | TBD |
 | repvgg_a0.rvgg_in1k | E004E | Y | 666 | TBD |
-| convnext_atto_ols.a2_in1k | E005A | N | 222 | TBD |
+| convnext_atto_ols.a2_in1k | E005A | N | 222 | 0.7357 |
 | convnext_atto_ols.a2_in1k | E005B | N | 333 | TBD |
 | convnext_atto_ols.a2_in1k | E005C | N | 444 | TBD |
 | convnext_atto_ols.a2_in1k | E005D | N | 555 | TBD |
 | convnext_atto_ols.a2_in1k | E005E | N | 666 | TBD |
-| convnext_atto_ols.a2_in1k | E006A | Y | 222 | TBD |
+| convnext_atto_ols.a2_in1k | E006A | Y | 222 | 0.8048 |
 | convnext_atto_ols.a2_in1k | E006B | Y | 333 | TBD |
 | convnext_atto_ols.a2_in1k | E006C | Y | 444 | TBD |
 | convnext_atto_ols.a2_in1k | E006D | Y | 555 | TBD |
