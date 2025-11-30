@@ -15,11 +15,11 @@ export HF_HOME="/scratch/rp06/sl5952/Zelpha/.cache"
 export HF_HUB_OFFLINE=1
 
 cd ../..
-# Run training with E001A
+# Run training with E003A
 python3 src/train.py \
-    --model_name deit3_small_patch16_224.fb_in1k \
+    --model_name resnet18 \
     --image_size 224 \
     --seed 222 \
     --no_lipschitz \
     --no_scale_pooling \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/E001A.log 2>&1
+    --linear_epochs 50 --finetune_epochs 30 >> logs/E003A.log 2>&1
