@@ -3,6 +3,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import argparse
 import numpy as np
+import random
 import os
 from ptflops import get_model_complexity_info
 from sklearn.metrics import f1_score
@@ -85,6 +86,16 @@ def calculate_margin(logits, dist_sq, labels, use_prototype=True):
     # m(x) = min_other - target (positive is good)
     margins = min_other_dists - target_dists
     return margins
+
+def set_seed(seed: int):
+    """Set random seeds for reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    # Enable deterministic behavior where possible
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def select_device(requested: str):
     """Resolve best available device based on requested string.
@@ -282,6 +293,7 @@ def main():
     parser.add_argument('--finetune_lr', type=float, default=0.0001, help='Learning rate for fine-tuning')
     parser.add_argument('--proto_lr_scale', type=float, default=0.1, help='Scale factor for prototype learning rate')
     parser.add_argument('--device', type=str, default='auto', help="Device: 'auto'|'cuda'|'mps'|'cpu'")
+    parser.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility')
     
     # Model & Ablation Args
     parser.add_argument('--model_name', type=str, default='zelpha', help='Model name: zelpha or timm model name (e.g. resnet18)')
@@ -299,6 +311,8 @@ def main():
     parser.add_argument('--dataset', type=str, default='UC_Merced', help='Dataset name (UC_Merced, EuroSAT, AID, etc.)')
     
     args = parser.parse_args()
+    set_seed(args.seed)
+    print(f"Seed set to: {args.seed}")
     
     device = select_device(args.device)
     print(f"Using device: {device.type}")

@@ -52,4 +52,13 @@
 | densenetblur121d.ra_in1k | E010C | Y | 444 | TBD |
 | densenetblur121d.ra_in1k | E010D | Y | 555 | TBD |
 | densenetblur121d.ra_in1k | E010E | Y | 666 | TBD |
-| 
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E011A | N | 222 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E011B | N | 333 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E011C | N | 444 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E011D | N | 555 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E011E | N | 666 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E012A | Y | 222 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E012B | Y | 333 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E012C | Y | 444 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E012D | Y | 555 | TBD |
+| vit_base_patch8_224.augreg2_in21k_ft_in1k | E012E | Y | 666 | TBD |
