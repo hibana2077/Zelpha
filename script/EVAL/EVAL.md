@@ -64,16 +64,16 @@
 | repvgg_a1.rvgg_in1k | E012D | Y | 555 | 0.4857 |
 | repvgg_a1.rvgg_in1k | E012E | Y | 666 | 0.6810 |
 <!-- repvgg_a2.rvgg_in1k -->
-| repvgg_a2.rvgg_in1k | E013A | N | 222 | TBD |
-| repvgg_a2.rvgg_in1k | E013B | N | 333 | TBD |
-| repvgg_a2.rvgg_in1k | E013C | N | 444 | TBD |
-| repvgg_a2.rvgg_in1k | E013D | N | 555 | TBD |
-| repvgg_a2.rvgg_in1k | E013E | N | 666 | TBD |
-| repvgg_a2.rvgg_in1k | E014A | Y | 222 | TBD |
-| repvgg_a2.rvgg_in1k | E014B | Y | 333 | TBD |
-| repvgg_a2.rvgg_in1k | E014C | Y | 444 | TBD |
-| repvgg_a2.rvgg_in1k | E014D | Y | 555 | TBD |
-| repvgg_a2.rvgg_in1k | E014E | Y | 666 | TBD |
+| repvgg_a2.rvgg_in1k | E013A | N | 222 | 0.6000 |
+| repvgg_a2.rvgg_in1k | E013B | N | 333 | 0.5738 |
+| repvgg_a2.rvgg_in1k | E013C | N | 444 | 0.5310 |
+| repvgg_a2.rvgg_in1k | E013D | N | 555 | 0.3929 |
+| repvgg_a2.rvgg_in1k | E013E | N | 666 | 0.4095 |
+| repvgg_a2.rvgg_in1k | E014A | Y | 222 | 0.7286 |
+| repvgg_a2.rvgg_in1k | E014B | Y | 333 | 0.6286 |
+| repvgg_a2.rvgg_in1k | E014C | Y | 444 | 0.6762 |
+| repvgg_a2.rvgg_in1k | E014D | Y | 555 | 0.5071 |
+| repvgg_a2.rvgg_in1k | E014E | Y | 666 | 0.6214 |
 <!-- repvgg_b0.rvgg_in1k -->
 | repvgg_b0.rvgg_in1k | E015A | N | 222 | TBD |
 | repvgg_b0.rvgg_in1k | E015B | N | 333 | TBD |
@@ -107,3 +107,47 @@
 | repvgg_b2.rvgg_in1k | E020C | Y | 444 | TBD |
 | repvgg_b2.rvgg_in1k | E020D | Y | 555 | TBD |
 | repvgg_b2.rvgg_in1k | E020E | Y | 666 | TBD |
+<!-- inception_next_atto.sail_in1k -->
+| inception_next_atto.sail_in1k | E021A | N | 222 | TBD |
+| inception_next_atto.sail_in1k | E021B | N | 333 | TBD |
+| inception_next_atto.sail_in1k | E021C | N | 444 | TBD |
+| inception_next_atto.sail_in1k | E021D | N | 555 | TBD |
+| inception_next_atto.sail_in1k | E021E | N | 666 | TBD |
+| inception_next_atto.sail_in1k | E022A | Y | 222 | TBD |
+| inception_next_atto.sail_in1k | E022B | Y | 333 | TBD |
+| inception_next_atto.sail_in1k | E022C | Y | 444 | TBD |
+| inception_next_atto.sail_in1k | E022D | Y | 555 | TBD |
+| inception_next_atto.sail_in1k | E022E | Y | 666 | TBD |
+<!-- inception_next_tiny.sail_in1k -->
+| inception_next_tiny.sail_in1k | E023A | N | 222 | TBD |
+| inception_next_tiny.sail_in1k | E023B | N | 333 | TBD |
+| inception_next_tiny.sail_in1k | E023C | N | 444 | TBD |
+| inception_next_tiny.sail_in1k | E023D | N | 555 | TBD |
+| inception_next_tiny.sail_in1k | E023E | N | 666 | TBD |
+| inception_next_tiny.sail_in1k | E024A | Y | 222 | TBD |
+| inception_next_tiny.sail_in1k | E024B | Y | 333 | TBD |
+| inception_next_tiny.sail_in1k | E024C | Y | 444 | TBD |
+| inception_next_tiny.sail_in1k | E024D | Y | 555 | TBD |
+| inception_next_tiny.sail_in1k | E024E | Y | 666 | TBD |
+<!-- inception_next_small.sail_in1k -->
+| inception_next_small.sail_in1k | E025A | N | 222 | TBD |
+| inception_next_small.sail_in1k | E025B | N | 333 | TBD |
+| inception_next_small.sail_in1k | E025C | N | 444 | TBD |
+| inception_next_small.sail_in1k | E025D | N | 555 | TBD |
+| inception_next_small.sail_in1k | E025E | N | 666 | TBD |
+| inception_next_small.sail_in1k | E026A | Y | 222 | TBD |
+| inception_next_small.sail_in1k | E026B | Y | 333 | TBD |
+| inception_next_small.sail_in1k | E026C | Y | 444 | TBD |
+| inception_next_small.sail_in1k | E026D | Y | 555 | TBD |
+| inception_next_small.sail_in1k | E026E | Y | 666 | TBD |
+<!-- inception_next_base.sail_in1k -->
+| inception_next_base.sail_in1k | E027A | N | 222 | TBD |
+| inception_next_base.sail_in1k | E027B | N | 333 | TBD |
+| inception_next_base.sail_in1k | E027C | N | 444 | TBD |
+| inception_next_base.sail_in1k | E027D | N | 555 | TBD |
+| inception_next_base.sail_in1k | E027E | N | 666 | TBD |
+| inception_next_base.sail_in1k | E028A | Y | 222 | TBD |
+| inception_next_base.sail_in1k | E028B | Y | 333 | TBD |
+| inception_next_base.sail_in1k | E028C | Y | 444 | TBD |
+| inception_next_base.sail_in1k | E028D | Y | 555 | TBD |
+| inception_next_base.sail_in1k | E028E | Y | 666 | TBD |
