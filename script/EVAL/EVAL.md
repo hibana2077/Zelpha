@@ -75,16 +75,16 @@
 | repvgg_a2.rvgg_in1k | E014D | Y | 555 | 0.5071 |
 | repvgg_a2.rvgg_in1k | E014E | Y | 666 | 0.6214 |
 <!-- repvgg_b0.rvgg_in1k -->
-| repvgg_b0.rvgg_in1k | E015A | N | 222 | TBD |
-| repvgg_b0.rvgg_in1k | E015B | N | 333 | TBD |
-| repvgg_b0.rvgg_in1k | E015C | N | 444 | TBD |
-| repvgg_b0.rvgg_in1k | E015D | N | 555 | TBD |
-| repvgg_b0.rvgg_in1k | E015E | N | 666 | TBD |
-| repvgg_b0.rvgg_in1k | E016A | Y | 222 | TBD |
-| repvgg_b0.rvgg_in1k | E016B | Y | 333 | TBD |
-| repvgg_b0.rvgg_in1k | E016C | Y | 444 | TBD |
-| repvgg_b0.rvgg_in1k | E016D | Y | 555 | TBD |
-| repvgg_b0.rvgg_in1k | E016E | Y | 666 | TBD |
+| repvgg_b0.rvgg_in1k | E015A | N | 222 | 0.4405 |
+| repvgg_b0.rvgg_in1k | E015B | N | 333 | 0.5214 |
+| repvgg_b0.rvgg_in1k | E015C | N | 444 | 0.6500 |
+| repvgg_b0.rvgg_in1k | E015D | N | 555 | 0.6143 |
+| repvgg_b0.rvgg_in1k | E015E | N | 666 | 0.5095 |
+| repvgg_b0.rvgg_in1k | E016A | Y | 222 | 0.6405 |
+| repvgg_b0.rvgg_in1k | E016B | Y | 333 | 0.6476 |
+| repvgg_b0.rvgg_in1k | E016C | Y | 444 | 0.7262 |
+| repvgg_b0.rvgg_in1k | E016D | Y | 555 | 0.7881 |
+| repvgg_b0.rvgg_in1k | E016E | Y | 666 | 0.6048 |
 <!-- repvgg_b1.rvgg_in1k -->
 | repvgg_b1.rvgg_in1k | E017A | N | 222 | TBD |
 | repvgg_b1.rvgg_in1k | E017B | N | 333 | TBD |
