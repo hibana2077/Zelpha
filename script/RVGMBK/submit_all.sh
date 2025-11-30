@@ -1,45 +1,45 @@
 #!/bin/bash
-# Submit all MBCMBK parameter sweep jobs
+# Submit all RVGMBK parameter sweep jobs
 
-echo "Submitting 36 MBCMBK experiments..."
+echo "Submitting 36 RVGMBK experiments..."
 echo ""
 
-qsub MBCMBK001.sh
-qsub MBCMBK002.sh
-qsub MBCMBK003.sh
-qsub MBCMBK004.sh
-qsub MBCMBK005.sh
-qsub MBCMBK006.sh
-qsub MBCMBK007.sh
-qsub MBCMBK008.sh
-qsub MBCMBK009.sh
-qsub MBCMBK010.sh
-qsub MBCMBK011.sh
-qsub MBCMBK012.sh
-qsub MBCMBK013.sh
-qsub MBCMBK014.sh
-qsub MBCMBK015.sh
-qsub MBCMBK016.sh
-qsub MBCMBK017.sh
-qsub MBCMBK018.sh
-qsub MBCMBK019.sh
-qsub MBCMBK020.sh
-qsub MBCMBK021.sh
-qsub MBCMBK022.sh
-qsub MBCMBK023.sh
-qsub MBCMBK024.sh
-qsub MBCMBK025.sh
-qsub MBCMBK026.sh
-qsub MBCMBK027.sh
-qsub MBCMBK028.sh
-qsub MBCMBK029.sh
-qsub MBCMBK030.sh
-qsub MBCMBK031.sh
-qsub MBCMBK032.sh
-qsub MBCMBK033.sh
-qsub MBCMBK034.sh
-qsub MBCMBK035.sh
-qsub MBCMBK036.sh
+qsub RVGMBK001.sh
+qsub RVGMBK002.sh
+qsub RVGMBK003.sh
+qsub RVGMBK004.sh
+qsub RVGMBK005.sh
+qsub RVGMBK006.sh
+qsub RVGMBK007.sh
+qsub RVGMBK008.sh
+qsub RVGMBK009.sh
+qsub RVGMBK010.sh
+qsub RVGMBK011.sh
+qsub RVGMBK012.sh
+qsub RVGMBK013.sh
+qsub RVGMBK014.sh
+qsub RVGMBK015.sh
+qsub RVGMBK016.sh
+qsub RVGMBK017.sh
+qsub RVGMBK018.sh
+qsub RVGMBK019.sh
+qsub RVGMBK020.sh
+qsub RVGMBK021.sh
+qsub RVGMBK022.sh
+qsub RVGMBK023.sh
+qsub RVGMBK024.sh
+qsub RVGMBK025.sh
+qsub RVGMBK026.sh
+qsub RVGMBK027.sh
+qsub RVGMBK028.sh
+qsub RVGMBK029.sh
+qsub RVGMBK030.sh
+qsub RVGMBK031.sh
+qsub RVGMBK032.sh
+qsub RVGMBK033.sh
+qsub RVGMBK034.sh
+qsub RVGMBK035.sh
+qsub RVGMBK036.sh
 
 echo ""
 echo "All jobs submitted!"

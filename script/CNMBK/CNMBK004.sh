@@ -17,8 +17,9 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with CNMBK004: num_prototypes=1, beta=0.1, margin=0.5
 python3 src/train.py \
-    --model_name fastvit_mci0.apple_mclip \
+    --model_name convnext_atto_ols.a2_in1k \
     --num_prototypes 1 \
     --beta 0.1 \
     --margin 0.5 \
+    --image_size 224 \
     --linear_epochs 50 --finetune_epochs 50 >> logs/CNMBK004.log 2>&1

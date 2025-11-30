@@ -59,3 +59,6 @@ Update the Status and Results columns as experiments complete.
 
 ---
 *Generated on: 2025-11-30*
+python3 -c "import timm; timm.create_model('densenetblur121d.ra_in1k', pretrained=True)"
+python3 -c "import timm; timm.create_model('repvgg_a0.rvgg_in1k', pretrained=True)"
+python3 -c "import timm; timm.create_model('convnext_atto_ols.a2_in1k', pretrained=True)"

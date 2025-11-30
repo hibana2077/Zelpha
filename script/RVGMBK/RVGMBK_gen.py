@@ -51,10 +51,11 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with {exp_id}: num_prototypes={num_prototypes}, beta={beta}, margin={margin}
 python3 src/train.py \\
-    --model_name fastvit_mci0.apple_mclip \\
+    --model_name repvgg_a0.rvgg_in1k \\
     --num_prototypes {num_prototypes} \\
     --beta {beta} \\
     --margin {margin} \\
+    --image_size 224 \\
     --linear_epochs {linear_epochs} --finetune_epochs {finetune_epochs} >> logs/{exp_id}.log 2>&1
 """
 
