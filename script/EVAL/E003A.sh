@@ -17,9 +17,12 @@ export HF_HUB_OFFLINE=1
 cd ../..
 # Run training with E003A
 python3 src/train.py \
-    --model_name resnet18 \
+    --model_name repvgg_a0.rvgg_in1k \
+    --num_prototypes 1 \
+    --beta 0.01 \
+    --margin 1.0 \
     --image_size 224 \
     --seed 222 \
     --no_lipschitz \
     --no_scale_pooling \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/E003A.log 2>&1
+    --linear_epochs 50 --finetune_epochs 0 >> logs/E003A.log 2>&1
