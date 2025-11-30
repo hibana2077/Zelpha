@@ -42,3 +42,13 @@
 | densenetblur121d.ra_in1k | E008C | Y | 444 | TBD |
 | densenetblur121d.ra_in1k | E008D | Y | 555 | TBD |
 | densenetblur121d.ra_in1k | E008E | Y | 666 | TBD |
+| regnetz_c16_evos.ch_in1k | E009A | N | 222 | TBD |
+| regnetz_c16_evos.ch_in1k | E009B | N | 333 | TBD |
+| regnetz_c16_evos.ch_in1k | E009C | N | 444 | TBD |
+| regnetz_c16_evos.ch_in1k | E009D | N | 555 | TBD |
+| regnetz_c16_evos.ch_in1k | E009E | N | 666 | TBD |
+| regnetz_c16_evos.ch_in1k | E010A | Y | 222 | TBD |
+| regnetz_c16_evos.ch_in1k | E010B | Y | 333 | TBD |
+| regnetz_c16_evos.ch_in1k | E010C | Y | 444 | TBD |
+| regnetz_c16_evos.ch_in1k | E010D | Y | 555 | TBD |
+| regnetz_c16_evos.ch_in1k | E010E | Y | 666 | TBD |
