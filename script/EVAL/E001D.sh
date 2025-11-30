@@ -18,8 +18,11 @@ cd ../..
 # Run training with E001D
 python3 src/train.py \
     --model_name deit3_small_patch16_224.fb_in1k \
+    --num_prototypes 1 \
+    --beta 0.01 \
+    --margin 1.0 \
     --image_size 224 \
     --seed 555 \
     --no_lipschitz \
     --no_scale_pooling \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/E001D.log 2>&1
+    --linear_epochs 50 --finetune_epochs 0 >> logs/E001D.log 2>&1

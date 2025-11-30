@@ -18,9 +18,9 @@ cd ../..
 # Run training with E002C
 python3 src/train.py \
     --model_name deit3_small_patch16_224.fb_in1k \
-    --num_prototypes 8 \
-    --beta 1.0 \
-    --margin 0.5 \
+    --num_prototypes 1 \
+    --beta 0.01 \
+    --margin 1.0 \
     --image_size 224 \
     --seed 444 \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/E002C.log 2>&1
+    --linear_epochs 50 --finetune_epochs 50 >> logs/E002C.log 2>&1
