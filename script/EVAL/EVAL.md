@@ -8,12 +8,12 @@
 | deit3_small_patch16_224.fb_in1k | E002A | Y | 222 | 0.5500 |
 | deit3_small_patch16_224.fb_in1k | E002C | Y | 444 | 0.6524 |
 | deit3_small_patch16_224.fb_in1k | E002D | Y | 555 | 0.7143 |
-| repvgg_a0.rvgg_in1k | E003A | N | 222 | TBD |
+| repvgg_a0.rvgg_in1k | E003A | N | 222 | 0.3619 |
 | repvgg_a0.rvgg_in1k | E003B | N | 333 | TBD |
 | repvgg_a0.rvgg_in1k | E003C | N | 444 | TBD |
 | repvgg_a0.rvgg_in1k | E003D | N | 555 | TBD |
 | repvgg_a0.rvgg_in1k | E003E | N | 666 | TBD |
-| repvgg_a0.rvgg_in1k | E004A | Y | 222 | TBD |
+| repvgg_a0.rvgg_in1k | E004A | Y | 222 | 0.4738 |
 | repvgg_a0.rvgg_in1k | E004B | Y | 333 | TBD |
 | repvgg_a0.rvgg_in1k | E004C | Y | 444 | TBD |
 | repvgg_a0.rvgg_in1k | E004D | Y | 555 | TBD |
