@@ -22,4 +22,4 @@ python3 src/train.py \
     --image_size 224 \
     --no_lipschitz \
     --no_scale_pooling \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/T007.log 2>&1
+    --linear_epochs 50 --finetune_epochs 0 >> logs/T007.log 2>&1

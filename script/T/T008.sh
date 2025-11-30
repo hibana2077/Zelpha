@@ -19,8 +19,8 @@ cd ../..
 python3 src/train.py \
     --model_name vit_small_patch16_rope_224.naver_in1k \
     --batch_size 16 \
-    --num_prototypes 8 \
+    --num_prototypes 1 \
     --beta 1.0 \
     --margin 0.5 \
     --image_size 224 \
-    --linear_epochs 50 --finetune_epochs 30 >> logs/T008.log 2>&1
+    --linear_epochs 50 --finetune_epochs 50 >> logs/T008.log 2>&1
