@@ -52,3 +52,58 @@
 | regnetz_c16_evos.ch_in1k | E010C | Y | 444 | TBD |
 | regnetz_c16_evos.ch_in1k | E010D | Y | 555 | TBD |
 | regnetz_c16_evos.ch_in1k | E010E | Y | 666 | TBD |
+<!-- repvgg_a1.rvgg_in1k -->
+| repvgg_a1.rvgg_in1k | E011A | N | 222 | TBD |
+| repvgg_a1.rvgg_in1k | E011B | N | 333 | TBD |
+| repvgg_a1.rvgg_in1k | E011C | N | 444 | TBD |
+| repvgg_a1.rvgg_in1k | E011D | N | 555 | TBD |
+| repvgg_a1.rvgg_in1k | E011E | N | 666 | TBD |
+| repvgg_a1.rvgg_in1k | E012A | Y | 222 | TBD |
+| repvgg_a1.rvgg_in1k | E012B | Y | 333 | TBD |
+| repvgg_a1.rvgg_in1k | E012C | Y | 444 | TBD |
+| repvgg_a1.rvgg_in1k | E012D | Y | 555 | TBD |
+| repvgg_a1.rvgg_in1k | E012E | Y | 666 | TBD |
+<!-- repvgg_a2.rvgg_in1k -->
+| repvgg_a2.rvgg_in1k | E013A | N | 222 | TBD |
+| repvgg_a2.rvgg_in1k | E013B | N | 333 | TBD |
+| repvgg_a2.rvgg_in1k | E013C | N | 444 | TBD |
+| repvgg_a2.rvgg_in1k | E013D | N | 555 | TBD |
+| repvgg_a2.rvgg_in1k | E013E | N | 666 | TBD |
+| repvgg_a2.rvgg_in1k | E014A | Y | 222 | TBD |
+| repvgg_a2.rvgg_in1k | E014B | Y | 333 | TBD |
+| repvgg_a2.rvgg_in1k | E014C | Y | 444 | TBD |
+| repvgg_a2.rvgg_in1k | E014D | Y | 555 | TBD |
+| repvgg_a2.rvgg_in1k | E014E | Y | 666 | TBD |
+<!-- repvgg_b0.rvgg_in1k -->
+| repvgg_b0.rvgg_in1k | E015A | N | 222 | TBD |
+| repvgg_b0.rvgg_in1k | E015B | N | 333 | TBD |
+| repvgg_b0.rvgg_in1k | E015C | N | 444 | TBD |
+| repvgg_b0.rvgg_in1k | E015D | N | 555 | TBD |
+| repvgg_b0.rvgg_in1k | E015E | N | 666 | TBD |
+| repvgg_b0.rvgg_in1k | E016A | Y | 222 | TBD |
+| repvgg_b0.rvgg_in1k | E016B | Y | 333 | TBD |
+| repvgg_b0.rvgg_in1k | E016C | Y | 444 | TBD |
+| repvgg_b0.rvgg_in1k | E016D | Y | 555 | TBD |
+| repvgg_b0.rvgg_in1k | E016E | Y | 666 | TBD |
+<!-- repvgg_b1.rvgg_in1k -->
+| repvgg_b1.rvgg_in1k | E017A | N | 222 | TBD |
+| repvgg_b1.rvgg_in1k | E017B | N | 333 | TBD |
+| repvgg_b1.rvgg_in1k | E017C | N | 444 | TBD |
+| repvgg_b1.rvgg_in1k | E017D | N | 555 | TBD |
+| repvgg_b1.rvgg_in1k | E017E | N | 666 | TBD |
+| repvgg_b1.rvgg_in1k | E018A | Y | 222 | TBD |
+| repvgg_b1.rvgg_in1k | E018B | Y | 333 | TBD |
+| repvgg_b1.rvgg_in1k | E018C | Y | 444 | TBD |
+| repvgg_b1.rvgg_in1k | E018D | Y | 555 | TBD |
+| repvgg_b1.rvgg_in1k | E018E | Y | 666 | TBD |
+<!-- repvgg_b2.rvgg_in1k -->
+| repvgg_b2.rvgg_in1k | E019A | N | 222 | TBD |
+| repvgg_b2.rvgg_in1k | E019B | N | 333 | TBD |
+| repvgg_b2.rvgg_in1k | E019C | N | 444 | TBD |
+| repvgg_b2.rvgg_in1k | E019D | N | 555 | TBD |
+| repvgg_b2.rvgg_in1k | E019E | N | 666 | TBD |
+| repvgg_b2.rvgg_in1k | E020A | Y | 222 | TBD |
+| repvgg_b2.rvgg_in1k | E020B | Y | 333 | TBD |
+| repvgg_b2.rvgg_in1k | E020C | Y | 444 | TBD |
+| repvgg_b2.rvgg_in1k | E020D | Y | 555 | TBD |
+| repvgg_b2.rvgg_in1k | E020E | Y | 666 | TBD |
