@@ -15,7 +15,7 @@ export HF_HOME="/scratch/rp06/sl5952/Zelpha/.cache"
 export HF_HUB_OFFLINE=1
 
 cd ../..
-# Run training with E006C
+# Run training with V001
 python3 src/train.py \
     --model_name convnext_atto_ols.a2_in1k \
     --num_prototypes 1 \
@@ -23,4 +23,5 @@ python3 src/train.py \
     --margin 1.0 \
     --image_size 224 \
     --seed 444 \
-    --linear_epochs 50 --finetune_epochs 50 >> logs/E006C.log 2>&1
+    --save_dir outputs/V001 \
+    --linear_epochs 50 --finetune_epochs 50 >> logs/V001.log 2>&1
