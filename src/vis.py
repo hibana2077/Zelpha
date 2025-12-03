@@ -305,16 +305,18 @@ def main():
     )
 
     # Build baseline (linear head) model
+    # NOTE: baseline 定義為「沒有 Lipschitz、沒有 multi-scale pooling」
     model_base = ZelphaModel(
         num_classes=num_classes,
         model_name=args.model_name,
-        use_spectral_norm=not args.no_lipschitz,
+        use_spectral_norm=False,
         use_prototype=False,
-        use_scale_pooling=not args.no_scale_pooling,
+        use_scale_pooling=False,
         num_prototypes=args.num_prototypes,
     ).to(device)
 
     # Build ZELPHA (prototype) model
+    # NOTE: ZELPHA 依照參數決定是否使用 Lipschitz / multi-scale pooling
     model_zelpha = ZelphaModel(
         num_classes=num_classes,
         model_name=args.model_name,
