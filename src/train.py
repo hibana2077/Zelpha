@@ -305,7 +305,7 @@ def main():
     parser.add_argument('--beta', type=float, default=0.1, help='Weight for prototype loss (intra/inter)')
     parser.add_argument('--margin', type=float, default=1.0, help='Margin for inter-class loss')
     parser.add_argument('--image_size', type=int, default=256, help='Input image size (square).')
-    parser.add_argument('--save_dir', type=str, default='', help='(Unused for disk) Kept for compatibility; checkpoints kept in memory.')
+    parser.add_argument('--save_dir', type=str, default='', help='If set, save best checkpoints/results to this directory; otherwise keep in memory only.')
 
     # Dataset Args
     parser.add_argument('--dataset', type=str, default='UC_Merced', help='Dataset name (UC_Merced, EuroSAT, AID, etc.)')
@@ -342,6 +342,11 @@ def main():
         num_prototypes=args.num_prototypes
     ).to(device)
     
+    # Optional disk saving
+    save_to_disk = bool(args.save_dir)
+    if save_to_disk:
+        os.makedirs(args.save_dir, exist_ok=True)
+
     # FLOPs & Params
     try:
         macs, params = get_model_complexity_info(model, (3, args.image_size, args.image_size), as_strings=True, print_per_layer_stat=False, verbose=False)
@@ -349,7 +354,7 @@ def main():
     except Exception as e:
         print(f"Could not calculate FLOPs: {e}")
 
-    # Track best checkpoints in memory (no disk writes)
+    # Track best checkpoints (in memory by default, optionally also on disk)
     best_linear_acc = -1.0
     best_proto_acc = -1.0
     best_linear_state = None
@@ -383,6 +388,16 @@ def main():
         if val_acc > best_linear_acc:
             best_linear_acc = val_acc
             best_linear_state = {k: v.clone().detach() for k, v in model.state_dict().items()}
+
+            # Optionally save linear checkpoint to disk
+            if save_to_disk:
+                ckpt_path = os.path.join(args.save_dir, 'best_linear.pt')
+                torch.save({
+                    'epoch': epoch,
+                    'state_dict': best_linear_state,
+                    'val_acc': best_linear_acc,
+                    'args': vars(args),
+                }, ckpt_path)
         print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f} (best {best_linear_acc:.4f})")
         scheduler.step()
 
@@ -439,6 +454,16 @@ def main():
         if val_acc > best_proto_acc:
             best_proto_acc = val_acc
             best_proto_state = {k: v.clone().detach() for k, v in model.state_dict().items()}
+
+            # Optionally save prototype checkpoint to disk
+            if save_to_disk:
+                ckpt_path = os.path.join(args.save_dir, 'best_proto.pt')
+                torch.save({
+                    'epoch': epoch,
+                    'state_dict': best_proto_state,
+                    'val_acc': best_proto_acc,
+                    'args': vars(args),
+                }, ckpt_path)
         print(f"Epoch {epoch}: Loss={train_metrics['loss']:.4f}, Train Acc={train_metrics['acc1']:.4f}, Val Acc={val_acc:.4f} (best {best_proto_acc:.4f})")
         scheduler.step()
 
@@ -452,6 +477,13 @@ def main():
     print("\nFinal Results:")
     for k, v in results.items():
         print(f"{k}: {v:.4f}")
+
+    # Optionally save evaluation results
+    if save_to_disk:
+        results_path = os.path.join(args.save_dir, 'results.txt')
+        with open(results_path, 'w') as f:
+            for k, v in results.items():
+                f.write(f"{k}: {v:.4f}\n")
 
 if __name__ == "__main__":
     main()
