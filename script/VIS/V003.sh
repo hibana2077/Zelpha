@@ -18,7 +18,7 @@ cd ../..
 # Run training with V003
 python3 -m src.vis \
   --ckpt_zelpha outputs/V001/best_proto.pt \
-  --ckpt_base   outputs/V002/best_proto.pt \
+  --ckpt_base   outputs/V002/best_linear.pt \
   --dataset UC_Merced \
   --batch_size 64 \
   --image_size 256 \
