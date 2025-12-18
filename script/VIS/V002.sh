@@ -26,4 +26,4 @@ python3 src/train.py \
     --no_lipschitz \
     --no_scale_pooling \
     --save_dir outputs/V002 \
-    --linear_epochs 50 --finetune_epochs 0 >> logs/V002.log 2>&1
+    --linear_epochs 50 --finetune_epochs 1 >> logs/V002.log 2>&1
