@@ -9,9 +9,9 @@ from ptflops import get_model_complexity_info
 from sklearn.metrics import f1_score
 from sklearn.cluster import KMeans
 
-from .dataset import get_dataloaders
-from .model import ZelphaModel
-from .loss import ZelphaLoss
+from dataset import get_dataloaders
+from model import ZelphaModel
+from loss import ZelphaLoss
 
 def calculate_metrics(logits, labels, num_classes=None):
     """
