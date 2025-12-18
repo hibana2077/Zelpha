@@ -1,1 +1,0 @@
-# placeholder for logs and notes
