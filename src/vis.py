@@ -8,9 +8,9 @@ import numpy as np
 import torch
 from sklearn.manifold import TSNE
 
-from dataset import get_dataloaders
-from model import ZelphaModel
-from train import (
+from .dataset import get_dataloaders
+from .model import ZelphaModel
+from .train import (
     calculate_margin,
     calculate_metrics,
     select_device,
