@@ -5,13 +5,20 @@ import argparse
 import numpy as np
 import random
 import os
+import sys
 from ptflops import get_model_complexity_info
 from sklearn.metrics import f1_score
 from sklearn.cluster import KMeans
 
-from dataset import get_dataloaders
-from model import ZelphaModel
-from loss import ZelphaLoss
+# Support running both as a module (`python -m src.train`) and as a script
+# (`python src/train.py`). When run as a script, Python puts `src/` on
+# sys.path, so we add the repo root to allow `import src.*`.
+if __package__ is None or __package__ == "":
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from src.dataset import get_dataloaders
+from src.model import ZelphaModel
+from src.loss import ZelphaLoss
 
 def calculate_metrics(logits, labels, num_classes=None):
     """
