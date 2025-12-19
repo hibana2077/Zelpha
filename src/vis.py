@@ -18,6 +18,68 @@ from .train import (
 )
 
 
+def _strip_module_prefix(state_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    # Some training setups save with a leading 'module.' (DataParallel).
+    if not state_dict:
+        return state_dict
+    if not any(k.startswith("module.") for k in state_dict.keys()):
+        return state_dict
+    return {k[len("module.") :]: v for k, v in state_dict.items()}
+
+
+def _adapt_and_filter_state_dict(
+    model: torch.nn.Module,
+    state_dict: Dict[str, torch.Tensor],
+    *,
+    model_label: str,
+) -> Dict[str, torch.Tensor]:
+    """Return a state_dict that can be loaded without shape mismatch errors.
+
+    - Keeps matching tensors.
+    - Adapts PrototypeHead's `classifier.mu` when only the number of prototypes differs.
+      (Repeating/slicing preserves logits behavior under min over prototypes.)
+    - Drops other mismatched tensors (still allowing strict=False to ignore missing keys).
+    """
+
+    model_sd = model.state_dict()
+    filtered: Dict[str, torch.Tensor] = {}
+
+    for key, tensor in state_dict.items():
+        if key not in model_sd:
+            # Unexpected keys are harmless with strict=False, but dropping keeps logs cleaner.
+            continue
+
+        target = model_sd[key]
+        if tuple(tensor.shape) == tuple(target.shape):
+            filtered[key] = tensor
+            continue
+
+        # Special-case: prototype tensor [C, K, D]
+        if key.endswith("classifier.mu") and tensor.ndim == 3 and target.ndim == 3:
+            c_s, k_s, d_s = tensor.shape
+            c_t, k_t, d_t = target.shape
+            if c_s == c_t and d_s == d_t:
+                if k_s == 1 and k_t > 1:
+                    filtered[key] = tensor.repeat(1, k_t, 1)
+                    print(
+                        f"[{model_label}] Adapted {key}: repeated prototypes {k_s} -> {k_t}"
+                    )
+                    continue
+                if k_s > 1 and k_t == 1:
+                    filtered[key] = tensor[:, :1, :].contiguous()
+                    print(
+                        f"[{model_label}] Adapted {key}: sliced prototypes {k_s} -> {k_t}"
+                    )
+                    continue
+
+        print(
+            f"[{model_label}] Skipping {key} due to shape mismatch: "
+            f"ckpt={tuple(tensor.shape)} vs model={tuple(target.shape)}"
+        )
+
+    return filtered
+
+
 @torch.no_grad()
 def collect_features_and_margins(
     model: ZelphaModel,
@@ -334,6 +396,12 @@ def main():
         state_base = state_base["state_dict"]
     if isinstance(state_zelpha, dict) and "state_dict" in state_zelpha:
         state_zelpha = state_zelpha["state_dict"]
+
+    state_base = _strip_module_prefix(state_base)
+    state_zelpha = _strip_module_prefix(state_zelpha)
+
+    state_base = _adapt_and_filter_state_dict(model_base, state_base, model_label="baseline")
+    state_zelpha = _adapt_and_filter_state_dict(model_zelpha, state_zelpha, model_label="zelpha")
 
     model_base.load_state_dict(state_base, strict=False)
     model_zelpha.load_state_dict(state_zelpha, strict=False)
