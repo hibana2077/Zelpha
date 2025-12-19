@@ -122,6 +122,7 @@ def tsne_visualization(
     save_path: str,
     title: str = "t-SNE",
     num_points: int = 2000,
+    perplexity: float = 30.0,
 ):
     """t-SNE visualization of features."""
 
@@ -133,7 +134,32 @@ def tsne_visualization(
         feats = feats[idx]
         labels = labels[idx]
 
-    tsne = TSNE(n_components=2, init="pca", random_state=42)
+    n_samples = feats.shape[0]
+    if n_samples < 2:
+        print(f"[tsne] Skipping: need >=2 samples, got {n_samples}")
+        return
+
+    # scikit-learn requires perplexity < n_samples; additionally, very high perplexity
+    # relative to n_samples tends to produce poor embeddings. Clamp safely.
+    max_reasonable = max(1.0, float(n_samples - 1) / 3.0)
+    effective_perplexity = min(float(perplexity), max_reasonable)
+    # Absolute safety: must be strictly less than n_samples.
+    effective_perplexity = min(effective_perplexity, float(n_samples - 1))
+    if effective_perplexity <= 0:
+        effective_perplexity = 1.0
+
+    if effective_perplexity != float(perplexity):
+        print(
+            f"[tsne] Adjusted perplexity {float(perplexity):g} -> {effective_perplexity:g} "
+            f"(n_samples={n_samples})"
+        )
+
+    tsne = TSNE(
+        n_components=2,
+        init="pca",
+        random_state=42,
+        perplexity=effective_perplexity,
+    )
     feats_2d = tsne.fit_transform(feats)
 
     plt.figure(figsize=(8, 8))
