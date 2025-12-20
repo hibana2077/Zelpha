@@ -372,6 +372,11 @@ def main():
 
     # Tasks / output
     parser.add_argument("--do_tsne", action="store_true")
+    parser.add_argument(
+        "--tsne_all",
+        action="store_true",
+        help="Run t-SNE on all test samples (ignores the improved-only selection for t-SNE)",
+    )
     parser.add_argument("--do_margin", action="store_true")
     parser.add_argument("--do_scale_vis", action="store_true")
     parser.add_argument("--output_dir", type=str, required=True, help="Directory to save visualizations")
@@ -487,17 +492,32 @@ def main():
 
     # 1) t-SNE
     if args.do_tsne:
+        if args.tsne_all:
+            feats_base_tsne = feats_base
+            feats_zelpha_tsne = feats_zelpha
+            labels_tsne = labels
+            title_base = "Baseline t-SNE (all)"
+            title_zelpha = "ZELPHA t-SNE (all)"
+            print(f"[tsne] Using all samples: n={labels_tsne.shape[0]}")
+        else:
+            feats_base_tsne = feats_base_sel
+            feats_zelpha_tsne = feats_zelpha_sel
+            labels_tsne = labels_sel
+            title_base = "Baseline t-SNE (selected)"
+            title_zelpha = "ZELPHA t-SNE (selected)"
+            print(f"[tsne] Using selected samples: n={labels_tsne.shape[0]}")
+
         tsne_visualization(
-            feats_base_sel,
-            labels_sel,
+            feats_base_tsne,
+            labels_tsne,
             save_path=os.path.join(args.output_dir, "tsne_baseline.png"),
-            title="Baseline t-SNE (selected)",
+            title=title_base,
         )
         tsne_visualization(
-            feats_zelpha_sel,
-            labels_sel,
+            feats_zelpha_tsne,
+            labels_tsne,
             save_path=os.path.join(args.output_dir, "tsne_zelpha.png"),
-            title="ZELPHA t-SNE (selected)",
+            title=title_zelpha,
         )
 
     # 2) Margin distribution (selected set)
