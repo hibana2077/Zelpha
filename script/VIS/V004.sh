@@ -46,4 +46,4 @@ python3 -m src.vis \
   --image_size 256 \
   --model_name zelpha \
   --output_dir outputs/V004 \
-  --do_tsne --tsne_topk 10 --do_margin --do_scale_vis >> logs/V004.log 2>&1
+  --do_margin --do_scale_vis >> logs/V004.log 2>&1
