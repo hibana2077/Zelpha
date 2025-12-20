@@ -123,6 +123,9 @@ def tsne_visualization(
     title: str = "t-SNE",
     num_points: int = 2000,
     perplexity: float = 30.0,
+    *,
+    save_legend: bool = False,
+    legend_path: str | None = None,
 ):
     """t-SNE visualization of features."""
 
@@ -162,24 +165,51 @@ def tsne_visualization(
     )
     feats_2d = tsne.fit_transform(feats)
 
-    plt.figure(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(8, 8))
     num_classes = len(np.unique(labels))
     cmap = plt.get_cmap("tab20", num_classes)
     for c in range(num_classes):
         mask = labels == c
-        plt.scatter(
+        ax.scatter(
             feats_2d[mask, 0],
             feats_2d[mask, 1],
-	    s=180,
+            s=180,
             color=cmap(c),
             label=str(c),
             alpha=0.7,
         )
-    plt.legend(fontsize=6, markerscale=3)
-    plt.title(title)
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close()
+
+    if save_legend:
+        if legend_path is None:
+            root, ext = os.path.splitext(save_path)
+            legend_path = f"{root}_legend{ext or '.png'}"
+        os.makedirs(os.path.dirname(legend_path), exist_ok=True)
+
+        handles, legend_labels = ax.get_legend_handles_labels()
+        if handles:
+            ncol = min(max(1, int(num_classes)), 10)
+            nrows = int(np.ceil(num_classes / ncol))
+            legend_fig_w = max(6.0, 0.75 * ncol)
+            legend_fig_h = max(1.5, 0.35 * nrows)
+            legend_fig = plt.figure(figsize=(legend_fig_w, legend_fig_h))
+            legend_fig.legend(
+                handles,
+                legend_labels,
+                loc="center",
+                ncol=ncol,
+                frameon=False,
+                fontsize=8,
+                markerscale=3,
+            )
+            legend_fig.tight_layout()
+            legend_fig.savefig(legend_path, dpi=300, bbox_inches="tight")
+            plt.close(legend_fig)
+
+    ax.legend(fontsize=6, markerscale=3)
+    ax.set_title(title)
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=300)
+    plt.close(fig)
 
 
 def margin_distribution(
@@ -377,6 +407,11 @@ def main():
         action="store_true",
         help="Run t-SNE on all test samples (ignores the improved-only selection for t-SNE)",
     )
+    parser.add_argument(
+        "--tsne_legend_separate",
+        action="store_true",
+        help="Also save a separate legend image for the t-SNE plots",
+    )
     parser.add_argument("--do_margin", action="store_true")
     parser.add_argument("--do_scale_vis", action="store_true")
     parser.add_argument("--output_dir", type=str, required=True, help="Directory to save visualizations")
@@ -512,6 +547,8 @@ def main():
             labels_tsne,
             save_path=os.path.join(args.output_dir, "tsne_baseline.png"),
             title=title_base,
+            save_legend=args.tsne_legend_separate,
+            legend_path=os.path.join(args.output_dir, "tsne_legend.png"),
         )
         tsne_visualization(
             feats_zelpha_tsne,
