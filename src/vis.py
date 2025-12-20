@@ -228,19 +228,15 @@ def margin_distribution(
         margins_base,
         bins=bins,
         density=True,
-        alpha=0.5,
+        alpha=0.85,
         label="Baseline",
-        edgecolor="black",
-        linewidth=3.5,
     )
     plt.hist(
         margins_zelpha,
         bins=bins,
         density=True,
-        alpha=0.5,
+        alpha=0.85,
         label="ZELPHA",
-        edgecolor="black",
-        linewidth=3.5,
     )
     plt.xlabel("Margin m(x)")
     plt.ylabel("Density")
