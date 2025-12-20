@@ -170,7 +170,7 @@ def tsne_visualization(
         plt.scatter(
             feats_2d[mask, 0],
             feats_2d[mask, 1],
-            s=5,
+	    s=180,
             color=cmap(c),
             label=str(c),
             alpha=0.7,
