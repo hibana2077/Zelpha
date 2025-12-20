@@ -412,6 +412,15 @@ def main():
         action="store_true",
         help="Also save a separate legend image for the t-SNE plots",
     )
+    parser.add_argument(
+        "--tsne_topk",
+        type=int,
+        default=0,
+        help=(
+            "If > 0 and --tsne_all is not set, run t-SNE on the top-K samples ranked by "
+            "(loss_base - loss_zelpha) CE improvement."
+        ),
+    )
     parser.add_argument("--do_margin", action="store_true")
     parser.add_argument("--do_scale_vis", action="store_true")
     parser.add_argument("--output_dir", type=str, required=True, help="Directory to save visualizations")
@@ -505,13 +514,14 @@ def main():
 
         mask_good_zelpha = (preds_zelpha == labels_t) & (preds_base != labels_t)
 
+        # CE loss improvement: positive means ZELPHA improved vs baseline.
+        ce = torch.nn.CrossEntropyLoss(reduction="none")
+        loss_base = ce(logits_base_t, labels_t)
+        loss_zelpha = ce(logits_zelpha_t, labels_t)
+        diff = loss_base - loss_zelpha
+
         if mask_good_zelpha.sum().item() < 10:
-            # Fallback: sort by CE loss improvement
-            ce = torch.nn.CrossEntropyLoss(reduction="none")
-            loss_base = ce(logits_base_t, labels_t)
-            loss_zelpha = ce(logits_zelpha_t, labels_t)
-            diff = loss_base - loss_zelpha
-            # pick top-k
+            # Fallback selection used for margin/scale plots.
             k = min(500, diff.numel())
             topk_idx = torch.topk(diff, k=k).indices
             mask_good_zelpha = torch.zeros_like(diff, dtype=torch.bool)
@@ -534,6 +544,15 @@ def main():
             title_base = "Baseline t-SNE (all)"
             title_zelpha = "ZELPHA t-SNE (all)"
             print(f"[tsne] Using all samples: n={labels_tsne.shape[0]}")
+        elif args.tsne_topk and args.tsne_topk > 0:
+            k = min(int(args.tsne_topk), int(diff.numel()))
+            topk_idx = torch.topk(diff, k=k).indices.cpu().numpy()
+            feats_base_tsne = feats_base[topk_idx]
+            feats_zelpha_tsne = feats_zelpha[topk_idx]
+            labels_tsne = labels[topk_idx]
+            title_base = f"Baseline t-SNE (top-{k} CE-improve)"
+            title_zelpha = f"ZELPHA t-SNE (top-{k} CE-improve)"
+            print(f"[tsne] Using top-k by CE improvement: k={k}")
         else:
             feats_base_tsne = feats_base_sel
             feats_zelpha_tsne = feats_zelpha_sel
