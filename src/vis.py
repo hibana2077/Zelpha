@@ -256,8 +256,8 @@ def margin_distribution(
     x_z, y_z = cdf(margins_zelpha)
 
     plt.figure(figsize=(8, 5))
-    plt.plot(x_b, y_b, label="Baseline")
-    plt.plot(x_z, y_z, label="ZELPHA")
+    plt.plot(x_b, y_b, label="Baseline", linewidth=2.5)
+    plt.plot(x_z, y_z, label="ZELPHA", linewidth=2.5)
     plt.xlabel("Margin m(x)")
     plt.ylabel("CDF")
     plt.legend()
