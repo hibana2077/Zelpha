@@ -1,9 +1,6 @@
 # Zelpha: Experimental Report (AI/ML Paper Style)
 
 > Date: 2025-12-21
-
-本報告根據本 workspace 內的程式、log、結果表格與圖檔整理而成，目標是提供可直接搬進論文（Methods/Experiments/Results/Discussion）的「AI/ML 格式」實驗報告。
-
 ---
 
 ## Abstract
